@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('group_citations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('group_id')->nullable()->constrained('groups')->onDelete('cascade');
+            $table->foreignId('group_id')->nullable()->constrained('groups');
             $table->string('name');
             $table->string('phone');
             $table->string('kingschat')->nullable();
