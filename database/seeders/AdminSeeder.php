@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Admin; // Make sure you have an Admin model
+use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
@@ -14,11 +14,10 @@ class AdminSeeder extends Seeder
         Admin::create([
             'name' => 'Super Admin',
             'email' => 'Superadmin@citation.com',
-            'password' => Hash::make('SuperAdmin2025')
+            'password' => Hash::make('SuperAdmin2025'),
         ]);
 
-        $this->command->info('Admin user created: admin@celz5.com / password123');
+        // Display the credentials in the console
+        $this->command->info('Admin user created: Superadmin@citation.com / SuperAdmin2025');
     }
 }
-
-

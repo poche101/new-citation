@@ -41,7 +41,7 @@
         localStorage.setItem("selectedGroup", groupName);
 
         // Redirect to the group form route
-        window.location.href = "{{ url('/group-form') }}";
+        window.location.href = "{{ url('https://citations.christembassylz5.org/group-form') }}";
     }
 </script>
 

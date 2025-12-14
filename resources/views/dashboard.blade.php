@@ -42,8 +42,8 @@
         </div>
 
         <!-- Right: Logout Button -->
-        @if ($user)
-            <form method="POST" action="{{ route('logout') }}">
+        @if (Auth::guard('admin')->check())
+            <form method="POST" action="{{ route('admin.logout') }}">
                 @csrf
                 <button type="submit"
                     class="px-4 py-2 rounded-md bg-red-500/30 hover:bg-red-500/50 text-white transition">
@@ -51,6 +51,7 @@
                 </button>
             </form>
         @endif
+
     </nav>
 
 
@@ -67,48 +68,48 @@
         </header>
 
         <!-- Cards -->
-   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
-    <!-- Departments Card -->
-    <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
-        <div class="flex items-center space-x-4">
-            <i data-feather="server" class="w-10 h-10 text-indigo-400"></i>
-            <div>
-                <h2 class="text-xl font-semibold text-white">Departments</h2>
-                <p class="text-gray-300 mt-1">
-                    Total Departments: <span class="font-bold">{{ $departmentsCount }}</span>
-                </p>
+            <!-- Departments Card -->
+            <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
+                <div class="flex items-center space-x-4">
+                    <i data-feather="server" class="w-10 h-10 text-indigo-400"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">Departments</h2>
+                        <p class="text-gray-300 mt-1">
+                            Total Departments: <span class="font-bold">{{ $departmentsCount }}</span>
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Groups Card -->
-    <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
-        <div class="flex items-center space-x-4">
-            <i data-feather="users" class="w-10 h-10 text-green-400"></i>
-            <div>
-                <h2 class="text-xl font-semibold text-white">Groups</h2>
-                <p class="text-gray-300 mt-1">
-                    Total Groups: <span class="font-bold">{{ $groupsCount }}</span>
-                </p>
+            <!-- Groups Card -->
+            <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
+                <div class="flex items-center space-x-4">
+                    <i data-feather="users" class="w-10 h-10 text-green-400"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">Groups</h2>
+                        <p class="text-gray-300 mt-1">
+                            Total Groups: <span class="font-bold">{{ $groupsCount }}</span>
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Citations Card -->
-    <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
-        <div class="flex items-center space-x-4">
-            <i data-feather="file-text" class="w-10 h-10 text-yellow-400"></i>
-            <div>
-                <h2 class="text-xl font-semibold text-white">Citations</h2>
-                <p class="text-gray-300 mt-1">
-                    Total Citations Submitted: <span class="font-bold">{{ $citationsCount }}</span>
-                </p>
+            <!-- Citations Card -->
+            <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
+                <div class="flex items-center space-x-4">
+                    <i data-feather="file-text" class="w-10 h-10 text-yellow-400"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">Citations</h2>
+                        <p class="text-gray-300 mt-1">
+                            Total Citations Submitted: <span class="font-bold">{{ $citationsCount }}</span>
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-</div>
+        </div>
 
 
 
@@ -138,16 +139,16 @@
             </div>
 
             <!-- Department Export Buttons -->
-                <div class="flex flex-wrap gap-2">
-            <a href="{{ route('departments.exportExcel') }}"
-            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 transition-all">Excel</a>
-            <a href="{{ route('departments.exportCSV') }}"
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-all">CSV</a>
-            <a href="{{ route('departments.exportPDF') }}"
-            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition-all">PDF</a>
-            <a href="{{ route('departments.exportWord') }}"
-            class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-all">Word</a>
-        </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('departments.exportExcel') }}"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 transition-all">Excel</a>
+                <a href="{{ route('departments.exportCSV') }}"
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-all">CSV</a>
+                <a href="{{ route('departments.exportPDF') }}"
+                    class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition-all">PDF</a>
+                <a href="{{ route('departments.exportWord') }}"
+                    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-all">Word</a>
+            </div>
 
         </div>
 
@@ -236,57 +237,63 @@
 
         <!-- Group Table -->
         <div class="overflow-x-auto glass rounded-xl shadow-lg mb-10">
-    <table class="min-w-full text-left border-collapse shadow-lg rounded-lg overflow-hidden" id="groupTable">
-        <thead class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-sm tracking-wide">
-            <tr>
-                <th class="p-3">Title</th>
-                <th class="p-3">Full Name</th>
-                <th class="p-3">Unit</th>
-                <th class="p-3">Designation</th>
-                <th class="p-3">Kingschat Handle</th>
-                <th class="p-3">Phone</th>
-                <th class="p-3">Group Name</th>
-                <th class="p-3">Period</th>
-                <th class="p-3">Citation</th>
-                <th class="p-3">Created At</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white/5 text-white/90 divide-y divide-white/20">
-            @forelse ($groupCitations as $citation)
-                <tr class="hover:bg-white/10 transition-all">
-                    <td class="p-3">{{ $citation->title ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->fullname ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->unit ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->designation ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->kingschat ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->phone ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->group_name ?? 'N/A' }}</td>
-                    <td class="p-3">{{ $citation->period ?? 'N/A' }}</td>
-                    <td class="p-3 flex items-center space-x-2">
-                        <span>{{ Str::limit($citation->description ?? 'N/A', 30, '...') }}</span>
-                        @if (strlen($citation->description ?? '') > 30)
-                            <button
-                                onclick="openGroupModal('{{ addslashes($citation->fullname ?? '') }}', '{{ addslashes($citation->description ?? '') }}')"
-                                class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
-                                View More
-                            </button>
-                        @endif
-                    </td>
-                    <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="10" class="p-4 text-center text-white/80">No group citations found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+            <table class="min-w-full text-left border-collapse shadow-lg rounded-lg overflow-hidden" id="groupTable">
+                <thead
+                    class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-sm tracking-wide">
+                    <tr>
+                        <th class="p-3">Title</th>
+                        <th class="p-3">Full Name</th>
+                        <th class="p-3">Unit</th>
+                        <th class="p-3">Designation</th>
+                        <th class="p-3">Kingschat Handle</th>
+                        <th class="p-3">Phone</th>
+                        <th class="p-3">Group Name</th>
+                        <th class="p-3">Period</th>
+                        <th class="p-3">Citation</th>
+                        <th class="p-3">Created At</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white/5 text-white/90 divide-y divide-white/20">
+                    @forelse ($groupCitations as $citation)
+                        <tr class="hover:bg-white/10 transition-all">
+                            <td class="p-3">{{ $citation->title ?? 'N/A' }}</td>
+                            <td class="p-3">{{ $citation->name ?? 'N/A' }}</td> <!-- Changed from fullname -->
+                            <td class="p-3">{{ $citation->unit ?? 'N/A' }}</td>
+                            <td class="p-3">{{ $citation->designation ?? 'N/A' }}</td>
+                            <td class="p-3">{{ $citation->kingschat ?? 'N/A' }}</td>
+                            <td class="p-3">{{ $citation->phone ?? 'N/A' }}</td>
+                            <td class="p-3">{{ $citation->group_name ?? 'N/A' }}</td>
+                            <td class="p-3">
+                                {{ $citation->period_from ? \Carbon\Carbon::parse($citation->period_from)->format('d-m-Y') : 'N/A' }}
+                                –
+                                {{ $citation->period_to ? \Carbon\Carbon::parse($citation->period_to)->format('d-m-Y') : 'N/A' }}
+                            </td>
+                            <td class="p-3 flex items-center space-x-2">
+                                <span>{{ Str::limit($citation->description ?? 'N/A', 30, '...') }}</span>
+                                @if (strlen($citation->description ?? '') > 30)
+                                    <button
+                                        onclick="openGroupModal('{{ addslashes($citation->name ?? '') }}', '{{ addslashes($citation->description ?? '') }}')"
+                                        class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
+                                        View More
+                                    </button>
+                                @endif
+                            </td>
+                            <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="p-4 text-center text-white/80">No group citations found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
 
-    {{-- Pagination --}}
-    <div class="mt-6">
-        {{ $groupCitations->links() }}
-    </div>
-</div>
+            </table>
+
+            {{-- Pagination --}}
+            <div class="mt-6">
+                {{ $groupCitations->links() }}
+            </div>
+        </div>
 
 
         <!-- ===================== MODALS ===================== -->
@@ -356,32 +363,46 @@
             });
         </script>
 
-@push('scripts')
+        @push('scripts')
+            {{-- AJAX CARDS --}}
+            <script>
+                async function updateDashboardCounts() {
+                    try {
+                        const response = await fetch("{{ route('dashboard.counts') }}");
+                        const data = await response.json();
 
-{{-- AJAX CARDS --}}
-<script>
-async function updateDashboardCounts() {
-    try {
-        const response = await fetch("{{ route('dashboard.counts') }}");
-        const data = await response.json();
+                        document.getElementById('departments-count').textContent = data.departmentsCount;
+                        document.getElementById('groups-count').textContent = data.groupsCount;
+                        document.getElementById('citations-count').textContent = data.citationsCount;
+                    } catch (error) {
+                        console.error('Error fetching dashboard counts:', error);
+                    }
+                }
 
-        document.getElementById('departments-count').textContent = data.departmentsCount;
-        document.getElementById('groups-count').textContent      = data.groupsCount;
-        document.getElementById('citations-count').textContent   = data.citationsCount;
-    } catch (error) {
-        console.error('Error fetching dashboard counts:', error);
-    }
-}
+                // Initial load
+                updateDashboardCounts();
 
-// Initial load
-updateDashboardCounts();
+                // Refresh every 10 seconds
+                setInterval(updateDashboardCounts, 10000);
+            </script>
 
-// Refresh every 10 seconds
-setInterval(updateDashboardCounts, 10000);
-</script>
+            </script>
+        @endpush
 
-</script>
-@endpush
+        <script>
+            const searchInput = document.getElementById('groupSearch');
+            const table = document.getElementById('groupTable').getElementsByTagName('tbody')[0];
+
+            searchInput.addEventListener('keyup', function() {
+                const filter = searchInput.value.toLowerCase();
+                const rows = table.getElementsByTagName('tr');
+
+                Array.from(rows).forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(filter) ? '' : 'none';
+                });
+            });
+        </script>
 
 
 

@@ -35,7 +35,7 @@
         localStorage.setItem('selectedDepartment', departmentName);
 
         // Redirect to the department form page
-        window.location.href = "{{ url('/department-form') }}";
+        window.location.href = "{{ url('https://citations.christembassylz5.org/department-form') }}";
     }
 
     document.addEventListener('DOMContentLoaded', () => {

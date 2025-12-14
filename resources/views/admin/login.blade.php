@@ -17,41 +17,34 @@
         </div>
 
         <!-- Login Form -->
-        <form method="POST" action="{{ route('admin.login') }}" class="space-y-6 relative z-10">
-            @csrf
+         <form method="POST" action="{{ route('admin.login.submit') }}" class="space-y-6">
+    @csrf
 
-            <!-- Email -->
-            <div class="relative">
-                <span class="absolute top-3 left-3 text-white/70">
-                    <i data-lucide="mail" class="w-5 h-5"></i>
-                </span>
-                <input type="email" name="email" placeholder="Email Address" required
-                    class="w-full pl-12 py-3 rounded-xl bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition shadow-inner" />
-            </div>
+    <!-- Email -->
+    <input type="email" name="email" placeholder="Email" required
+        class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-indigo-500" />
 
-            <!-- Password -->
-            <div class="relative">
-                <span class="absolute top-3 left-3 text-white/70">
-                    <i data-lucide="lock" class="w-5 h-5"></i>
-                </span>
-                <input type="password" name="password" placeholder="Password" required
-                    class="w-full pl-12 py-3 rounded-xl bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition shadow-inner" />
-            </div>
+    <!-- Password -->
+    <input type="password" name="password" placeholder="Password" required
+        class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-indigo-500" />
 
-            <!-- Remember Me & Forgot -->
-            <div class="flex items-center justify-between text-white/70 text-sm">
-                <label class="flex items-center gap-2">
-                    <input type="checkbox" class="accent-purple-500">
-                    Remember Me
-                </label>
-            </div>
+    <!-- Remember Me -->
+    <label>
+        <input type="checkbox" name="remember"> Remember Me
+    </label>
 
-            <!-- Submit Button -->
-            <button type="submit"
-                class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2">
-                <i data-lucide="log-in" class="w-5 h-5"></i> Sign In
-            </button>
-        </form>
+    <button type="submit"
+        class="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500">
+        Login
+    </button>
+
+    @if ($errors->any())
+        <div class="text-red-500 mt-2">
+            {{ $errors->first() }}
+        </div>
+    @endif
+</form>
+
 
         <!-- Divider -->
         <div class="flex items-center my-6 relative z-10">

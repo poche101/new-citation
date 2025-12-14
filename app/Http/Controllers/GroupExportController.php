@@ -2,61 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Group;
+use App\Models\GroupCitation;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use PDF;
+use App\Exports\GroupCitationsExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\IOFactory;
 
 class GroupExportController extends Controller
 {
     public function exportExcel()
     {
-        // optional: add later
-        abort(501);
+        return Excel::download(new GroupCitationsExport, 'group_citations.xlsx');
     }
 
     public function exportCSV()
     {
-        $groups = Group::all();
-
-        return response()->streamDownload(function () use ($groups) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['ID', 'Name', 'Created At']);
-
-            foreach ($groups as $group) {
-                fputcsv($handle, [$group->id, $group->name, $group->created_at]);
-            }
-
-            fclose($handle);
-        }, 'groups.csv');
+        return Excel::download(new GroupCitationsExport, 'group_citations.csv');
     }
 
     public function exportPDF()
     {
-        $groups = Group::all();
-        $pdf = PDF::loadView('admin.exports.groups_pdf', compact('groups'));
-        return $pdf->download('groups.pdf');
+        $groupCitations = GroupCitation::all();
+        $pdf = Pdf::loadView('exports.group_citations_pdf', compact('groupCitations'));
+        return $pdf->download('group_citations.pdf');
     }
 
     public function exportWord()
     {
-        $groups = Group::all();
-
+        $groupCitations = GroupCitation::all();
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
-        $section->addText('Groups Export', ['bold' => true, 'size' => 16]);
 
-        foreach ($groups as $group) {
-            $section->addText("• {$group->name}");
+        foreach($groupCitations as $citation){
+            $section->addText("{$citation->title} {$citation->name} - {$citation->group_name}");
+            $section->addText("Unit: {$citation->unit}, Designation: {$citation->designation}");
+            $section->addText("Kingschat: {$citation->kingschat}, Phone: {$citation->phone}");
+            $section->addText("Citation: {$citation->description}");
+            $section->addTextBreak(1);
         }
 
-        $fileName = 'groups.docx';
-        $tempFile = tempnam(sys_get_temp_dir(), 'groups');
-
-        IOFactory::createWriter($phpWord, 'Word2007')->save($tempFile);
-
-        return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+        $file = storage_path('group_citations.docx');
+        $phpWord->save($file, 'Word2007');
+        return response()->download($file)->deleteFileAfterSend(true);
     }
 }

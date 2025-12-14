@@ -35,28 +35,14 @@ return [
     |
     */
 
-    'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
+'guards' => [
+    'admin' => [
+        'driver' => 'session',      // stores admin login in session
+        'provider' => 'admins',     // links to the 'admins' provider
     ],
-
-    'guards' => [
     'web' => [
         'driver' => 'session',
         'provider' => 'users',
-    ],
-
-    'api' => [
-        'driver' => 'token',
-        'provider' => 'users',
-        'hash' => false,
-    ],
-
-    'admin' => [
-        'driver' => 'session',
-        'provider' => 'admins',
     ],
 ],
 
@@ -89,18 +75,16 @@ return [
         // ],
     ],
 
-    'providers' => [
+      'providers' => [
+    'admins' => [
+        'driver' => 'eloquent',        // Eloquent ORM
+        'model' => App\Models\Admin::class,  // Admin model
+    ],
     'users' => [
         'driver' => 'eloquent',
         'model' => App\Models\User::class,
     ],
-
-    'admins' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\Admin::class,
-    ],
 ],
-
     /*
     |--------------------------------------------------------------------------
     | Resetting Passwords

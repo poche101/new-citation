@@ -9,16 +9,18 @@ return new class extends Migration {
     {
         Schema::create('group_citations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('group_id')->nullable()->constrained('groups');
-            $table->string('name');
-            $table->string('phone');
-            $table->string('kingschat')->nullable();
+
+            $table->string('title')->nullable();
+            $table->string('name');                 // Full name
             $table->string('unit');
             $table->string('designation');
-            $table->string('title')->nullable();
+            $table->string('kingschat')->nullable();
+            $table->string('phone');
+            $table->string('group_name');           // Stored as string
             $table->date('period_from')->nullable();
             $table->date('period_to')->nullable();
-            $table->text('description');
+            $table->text('description');            // Citation
+
             $table->timestamps();
         });
     }

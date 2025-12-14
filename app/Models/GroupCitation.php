@@ -10,20 +10,15 @@ class GroupCitation extends Model
     use HasFactory;
 
     protected $fillable = [
+        'title',
         'name',
-        'phone',
-        'kingschat',
         'unit',
         'designation',
-        'title',
-        'group_id',
+        'kingschat',
+        'phone',
+        'group_name',
         'period_from',
         'period_to',
         'description',
     ];
-
-    public function group()
-    {
-        return $this->belongsTo(Group::class);
-    }
 }

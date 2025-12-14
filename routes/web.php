@@ -8,16 +8,16 @@ use App\Http\Controllers\GroupCitationController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupExportController;
 
 
 
 
-Route::prefix('groups')->name('groups.')->group(function () {
-    Route::get('/export/excel', [GroupExportController::class, 'exportExcel'])->name('exportExcel');
-    Route::get('/export/csv', [GroupExportController::class, 'exportCSV'])->name('exportCSV');
-    Route::get('/export/pdf', [GroupExportController::class, 'exportPDF'])->name('exportPDF');
-    Route::get('/export/word', [GroupExportController::class, 'exportWord'])->name('exportWord');
-});
+
+Route::get('/groups/export/excel', [GroupExportController::class, 'exportExcel'])->name('groups.exportExcel');
+Route::get('/groups/export/csv', [GroupExportController::class, 'exportCSV'])->name('groups.exportCSV');
+Route::get('/groups/export/pdf', [GroupExportController::class, 'exportPDF'])->name('groups.exportPDF');
+Route::get('/groups/export/word', [GroupExportController::class, 'exportWord'])->name('groups.exportWord');
 
 Route::prefix('departments')->group(function () {
     Route::get('/export/excel', [DepartmentCitationController::class, 'exportExcel'])->name('departments.exportExcel');
@@ -34,13 +34,22 @@ Route::get('/dashboard/counts', [AdminDashboardController::class, 'getCounts'])
      ->name('dashboard.counts');
 
 
+Route::prefix('admin')->name('admin.')->group(function () {
 
-Route::prefix('admin')->group(function () {
-    Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
-    Route::post('/login', [AdminController::class, 'login'])->name('admin.login.submit');
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
+    // Login routes (accessible to everyone)
+    Route::get('login', [AdminController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [AdminController::class, 'login'])->name('login.submit');
+
+    // Logout route (optional, protected)
+    Route::post('logout', [AdminController::class, 'logout'])->name('logout')
+        ->middleware('auth:admin');
 });
+
+    // Dashboard route (protected)
+   Route::get('dashboard', [AdminController::class, 'dashboard'])
+        ->name('admin.dashboard')
+        ->middleware('admin.dashboard.access');
+
 
 
 Route::get('/group-form/{groupId?}', [GroupCitationController::class, 'create'])
