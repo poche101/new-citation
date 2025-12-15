@@ -3,23 +3,20 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
+use Illuminate\Support\Str; // for remember_token
 
 class UserFactory extends Factory
 {
-    // Specify the corresponding model if not already set
+    // Make sure to specify the model
     protected $model = \App\Models\User::class;
 
-    /**
-     * Define the model's default state.
-     */
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),            // use $this->faker
+            'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => bcrypt('password'),          // password
+            'password' => bcrypt('password'),
             'remember_token' => Str::random(10),
         ];
     }
