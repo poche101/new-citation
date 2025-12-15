@@ -365,28 +365,27 @@
 
         @push('scripts')
             {{-- AJAX CARDS --}}
-            <script>
-                async function updateDashboardCounts() {
-                    try {
-                        const response = await fetch("{{ route('dashboard.counts') }}");
-                        const data = await response.json();
+          <script>
+    async function updateDashboardCounts() {
+        try {
+            const response = await fetch("{{ route('admin.dashboard.counts') }}"); // ✅ updated route
+            const data = await response.json();
 
-                        document.getElementById('departments-count').textContent = data.departmentsCount;
-                        document.getElementById('groups-count').textContent = data.groupsCount;
-                        document.getElementById('citations-count').textContent = data.citationsCount;
-                    } catch (error) {
-                        console.error('Error fetching dashboard counts:', error);
-                    }
-                }
+            document.getElementById('departments-count').textContent = data.departmentsCount;
+            document.getElementById('groups-count').textContent = data.groupsCount;
+            document.getElementById('citations-count').textContent = data.citationsCount;
+        } catch (error) {
+            console.error('Error fetching dashboard counts:', error);
+        }
+    }
 
-                // Initial load
-                updateDashboardCounts();
+    // Initial load
+    updateDashboardCounts();
 
-                // Refresh every 10 seconds
-                setInterval(updateDashboardCounts, 10000);
-            </script>
+    // Refresh every 10 seconds
+    setInterval(updateDashboardCounts, 10000);
+</script>
 
-            </script>
         @endpush
 
         <script>
