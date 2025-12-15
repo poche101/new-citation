@@ -84,7 +84,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Dashboard counts API (if used via JS/AJAX)
-    Route::get('dashboard/counts', [AdminDashboardController::class, 'getCounts'])->name('dashboard.counts');
+  Route::get('/admin/dashboard/counts', [AdminDashboardController::class, 'getCounts'])
+     ->name('dashboard.counts'); // remove admin. prefix
+
 });
 
 // -------------------------
