@@ -298,75 +298,104 @@
 
 
         <!-- ===================== MODALS ===================== -->
-        <!-- Department Modal -->
-        <div id="departmentModal"
-     class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50"
-     onclick="closeDepartmentModal()"
-     role="dialog"
-     aria-modal="true">
+       !-- Department Citation View More (FIXED) -->
+    @forelse ($departmentCitations as $citation)
+        <td class="p-3 flex items-center space-x-2">
+            <span>{{ Str::limit($citation->citation ?? 'N/A', 30, '...') }}</span>
+            @if (strlen($citation->citation ?? '') > 30)
+                <button
+                    onclick='openDepartmentModal(@json($citation->fullname ?? ""), @json($citation->citation ?? ""))'
+                    class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
+                    View More
+                </button>
+            @endif
+        </td>
+    @endforelse
 
-    <div
-        class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]"
-        onclick="event.stopPropagation()">
+    <!-- Group Citation View More (FIXED) -->
+    @forelse ($groupCitations as $citation)
+        <td class="p-3 flex items-center space-x-2">
+            <span>{{ Str::limit($citation->description ?? 'N/A', 30, '...') }}</span>
+            @if (strlen($citation->description ?? '') > 30)
+                <button
+                    onclick='openGroupModal(@json($citation->name ?? ""), @json($citation->description ?? ""))'
+                    class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
+                    View More
+                </button>
+            @endif
+        </td>
+    @endforelse
 
-        <button onclick="closeDepartmentModal()"
-            class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl"
-            aria-label="Close modal">
-            &times;
-        </button>
+    <!-- ===================== MODALS ===================== -->
 
-        <h2 class="text-xl font-semibold text-white mb-4" id="departmentModalName"></h2>
-        <p class="text-white/90 text-lg break-words" id="departmentModalCitation"></p>
+    <!-- Department Modal -->
+    <div id="departmentModal"
+        class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50"
+        onclick="closeDepartmentModal()"
+        role="dialog"
+        aria-modal="true">
+
+        <div class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]"
+            onclick="event.stopPropagation()">
+
+            <button onclick="closeDepartmentModal()"
+                class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl"
+                aria-label="Close modal">
+                &times;
+            </button>
+
+            <h2 class="text-xl font-semibold text-white mb-4" id="departmentModalName"></h2>
+            <p class="text-white/90 text-lg break-words" id="departmentModalCitation"></p>
+        </div>
     </div>
-</div>
 
+    <!-- Group Modal -->
+    <div id="groupModal"
+        class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50"
+        onclick="closeGroupModal()"
+        role="dialog"
+        aria-modal="true">
 
-        <!-- Group Modal -->
-        <div id="groupModal"
-     class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50"
-     onclick="closeGroupModal()"
-     role="dialog"
-     aria-modal="true">
+        <div class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]"
+            onclick="event.stopPropagation()">
 
-    <div
-        class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]"
-        onclick="event.stopPropagation()">
+            <button onclick="closeGroupModal()"
+                class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl"
+                aria-label="Close modal">
+                &times;
+            </button>
 
-        <button onclick="closeGroupModal()"
-            class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl"
-            aria-label="Close modal">
-            &times;
-        </button>
-
-        <h2 class="text-xl font-semibold text-white mb-4" id="groupModalName"></h2>
-        <p class="text-white/90 text-lg break-words" id="groupModalCitation"></p>
+            <h2 class="text-xl font-semibold text-white mb-4" id="groupModalName"></h2>
+            <p class="text-white/90 text-lg break-words" id="groupModalCitation"></p>
+        </div>
     </div>
-</div>
 
+    <!-- ===================== SCRIPTS ===================== -->
+    <script>
+        function openDepartmentModal(name, citation) {
+            document.getElementById('departmentModalName').innerText = name;
+            document.getElementById('departmentModalCitation').innerText = citation;
+            document.getElementById('departmentModal').classList.remove('hidden');
+            document.getElementById('departmentModal').classList.add('flex');
+        }
 
-        <!-- ===================== SCRIPTS ===================== -->
-        <script>
-            // ------------------ Department Modal ------------------
-            function openDepartmentModal(name, citation) {
-                document.getElementById('departmentModalName').innerText = name;
-                document.getElementById('departmentModalCitation').innerText = citation;
-                document.getElementById('departmentModal').classList.remove('hidden');
-                document.getElementById('departmentModal').classList.add('flex');
-            }
+        function closeDepartmentModal() {
+            document.getElementById('departmentModal').classList.add('hidden');
+            document.getElementById('departmentModal').classList.remove('flex');
+        }
 
-            function closeDepartmentModal() {
-                document.getElementById('departmentModal').classList.add('hidden');
-                document.getElementById('departmentModal').classList.remove('flex');
-            }
+        function openGroupModal(name, citation) {
+            document.getElementById('groupModalName').innerText = name;
+            document.getElementById('groupModalCitation').innerText = citation;
+            document.getElementById('groupModal').classList.remove('hidden');
+            document.getElementById('groupModal').classList.add('flex');
+        }
 
-            // ------------------ Group Modal ------------------
-            function openGroupModal(name, citation) {
-                document.getElementById('groupModalName').innerText = name;
-                document.getElementById('groupModalCitation').innerText = citation;
-                document.getElementById('groupModal').classList.remove('hidden');
-                document.getElementById('groupModal').classList.add('flex');
-            }
-
+        function closeGroupModal() {
+            document.getElementById('groupModal').classList.add('hidden');
+            document.getElementById('groupModal').classList.remove('flex');
+        }
+    </script>
             function closeGroupModal() {
                 document.getElementById('groupModal').classList.add('hidden');
                 document.getElementById('groupModal').classList.remove('flex');
