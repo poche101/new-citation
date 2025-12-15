@@ -23,7 +23,7 @@ class AdminDashboardController extends Controller
         $departmentsCount = DepartmentCitation::distinct('department')->count('department');
 
         // Groups with at least one citation
-        $groupsCount = GroupCitation::distinct('group_id')->count('group_id');
+       $groupsCount = GroupCitation::distinct('group_name')->count('group_name');
 
         // Total citations submitted (group + department)
         $citationsCount = GroupCitation::count() + DepartmentCitation::count();
