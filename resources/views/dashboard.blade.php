@@ -298,26 +298,50 @@
 
         <!-- ===================== MODALS ===================== -->
         <!-- Department Modal -->
-        <div id="departmentModal" class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50">
-            <div
-                class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]">
-                <button onclick="closeDepartmentModal()"
-                    class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl">&times;</button>
-                <h2 class="text-xl font-semibold text-white mb-4" id="departmentModalName"></h2>
-                <p class="text-white/90 text-lg break-words" id="departmentModalCitation"></p>
-            </div>
-        </div>
+        <div id="departmentModal"
+     class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50"
+     onclick="closeDepartmentModal()"
+     role="dialog"
+     aria-modal="true">
+
+    <div
+        class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]"
+        onclick="event.stopPropagation()">
+
+        <button onclick="closeDepartmentModal()"
+            class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl"
+            aria-label="Close modal">
+            &times;
+        </button>
+
+        <h2 class="text-xl font-semibold text-white mb-4" id="departmentModalName"></h2>
+        <p class="text-white/90 text-lg break-words" id="departmentModalCitation"></p>
+    </div>
+</div>
+
 
         <!-- Group Modal -->
-        <div id="groupModal" class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50">
-            <div
-                class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]">
-                <button onclick="closeGroupModal()"
-                    class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl">&times;</button>
-                <h2 class="text-xl font-semibold text-white mb-4" id="groupModalName"></h2>
-                <p class="text-white/90 text-lg break-words" id="groupModalCitation"></p>
-            </div>
-        </div>
+        <div id="groupModal"
+     class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50"
+     onclick="closeGroupModal()"
+     role="dialog"
+     aria-modal="true">
+
+    <div
+        class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]"
+        onclick="event.stopPropagation()">
+
+        <button onclick="closeGroupModal()"
+            class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl"
+            aria-label="Close modal">
+            &times;
+        </button>
+
+        <h2 class="text-xl font-semibold text-white mb-4" id="groupModalName"></h2>
+        <p class="text-white/90 text-lg break-words" id="groupModalCitation"></p>
+    </div>
+</div>
+
 
         <!-- ===================== SCRIPTS ===================== -->
         <script>
