@@ -46,9 +46,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
     // Dashboard route (protected)
-   Route::get('dashboard', [AdminController::class, 'dashboard'])
-        ->name('admin.dashboard')
-        ->middleware('admin.dashboard.access');
+ Route::get('dashboard', [AdminController::class, 'dashboard'])
+     ->name('admin.dashboard');
+
 
 
 
