@@ -312,20 +312,6 @@
         </td>
     @endforelse
 
-    <!-- Group Citation View More (FIXED) -->
-    @forelse ($groupCitations as $citation)
-        <td class="p-3 flex items-center space-x-2">
-            <span>{{ Str::limit($citation->description ?? 'N/A', 30, '...') }}</span>
-            @if (strlen($citation->description ?? '') > 30)
-                <button
-                    onclick='openGroupModal(@json($citation->name ?? ""), @json($citation->description ?? ""))'
-                    class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
-                    View More
-                </button>
-            @endif
-        </td>
-    @endforelse
-
     <!-- ===================== MODALS ===================== -->
 
     <!-- Department Modal -->
