@@ -16,10 +16,10 @@
                 CELZ5 <span class="text-yellow-300">Citation</span>
             </h1>
             <p class="text-xl md:text-2xl mb-4">
-                Track, submit, and manage individual, departmental, and group citations with ease.
+                Celz5 Citation is your comprehensive platform for tracking, submitting, and managing individual, departmental and group citations with ease and efficiency.
             </p>
             <p class="text-xl md:text-2xl mb-4">
-                Enhance productivity and ensure contributions are recognized properly.
+                Built to enhance productivity and foster collaboration, CELZ5 Citations ensures your contributions are recognized and properly documented.
             </p>
         </div>
     </section>
