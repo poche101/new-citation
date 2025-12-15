@@ -186,11 +186,10 @@
                             <td class="p-3 flex items-center space-x-2">
                                 <span>{{ Str::limit($citation->citation ?? 'N/A', 30, '...') }}</span>
                                 @if (strlen($citation->citation ?? '') > 30)
-                                    <button
-                                        onclick="openDepartmentModal('{{ addslashes($citation->fullname ?? '') }}', '{{ addslashes($citation->citation ?? '') }}')"
-                                        class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
-                                        View More
-                                    </button>
+                            <button onclick="openDepartmentModal({{ json_encode($citation->fullname) }}, {{ json_encode($citation->citation) }})"
+                                class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
+                                View More
+                            </button>
                                 @endif
                             </td>
                             <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
@@ -272,8 +271,7 @@
                             <td class="p-3 flex items-center space-x-2">
                                 <span>{{ Str::limit($citation->description ?? 'N/A', 30, '...') }}</span>
                                 @if (strlen($citation->description ?? '') > 30)
-                                    <button
-                                        onclick="openGroupModal('{{ addslashes($citation->name ?? '') }}', '{{ addslashes($citation->description ?? '') }}')"
+                                    <button onclick="openGroupModal({{ json_encode($citation->fullname) }}, {{ json_encode($citation->description) }})"
                                         class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
                                         View More
                                     </button>
