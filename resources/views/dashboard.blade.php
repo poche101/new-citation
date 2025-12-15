@@ -7,6 +7,7 @@
     <title>Admin Dashboard - CELZ5 Citation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo2.png') }}">
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
 </head>
