@@ -2,91 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\DepartmentCitation;
 use App\Models\GroupCitation;
-use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
     /**
      * Show admin dashboard with counts and tables
      */
-    public function index(Request $request)
+    public function index()
     {
-        $search = $request->query('search');
+        // Fetch department citations paginated
+        $departmentCitations = DepartmentCitation::latest()->paginate(10, ['*'], 'departments_page');
 
-        // -------------------------
-        // Dashboard card counts
-        // -------------------------
-        $departmentsCount = DepartmentCitation::distinct('department')->count('department');
-        $groupsCount = GroupCitation::distinct('group_name')->count('group_name');
-        $citationsCount = GroupCitation::count() + DepartmentCitation::count();
+        // Fetch group citations paginated
+        $groupCitations = GroupCitation::latest()->paginate(10, ['*'], 'groups_page');
 
-        // -------------------------
-        // Department citations table
-        // -------------------------
-        $departmentCitationsQuery = DepartmentCitation::query();
-        if ($search) {
-            $departmentCitationsQuery->where(function ($q) use ($search) {
-                $q->where('fullname', 'like', "%{$search}%")
-                  ->orWhere('unit', 'like', "%{$search}%")
-                  ->orWhere('department', 'like', "%{$search}%")
-                  ->orWhere('designation', 'like', "%{$search}%")
-                  ->orWhere('kingschat', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%")
-                  ->orWhere('citation', 'like', "%{$search}%");
-            });
-        }
-        $departmentCitations = $departmentCitationsQuery
-            ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'departments_page');
+        // Counts for dashboard cards
+        $departmentsCount = DepartmentCitation::count();
+        $groupsCount = GroupCitation::count();
+        $citationsCount = $departmentsCount + $groupsCount;
 
-        // -------------------------
-        // Group citations table
-        // -------------------------
-        $groupCitationsQuery = GroupCitation::query();
-        if ($search) {
-            $groupCitationsQuery->where(function ($q) use ($search) {
-                $q->where('fullname', 'like', "%{$search}%")
-                  ->orWhere('unit', 'like', "%{$search}%")
-                  ->orWhere('group_name', 'like', "%{$search}%")
-                  ->orWhere('designation', 'like', "%{$search}%")
-                  ->orWhere('kingschat', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%")
-                  ->orWhere('citation', 'like', "%{$search}%");
-            });
-        }
-        $groupCitations = $groupCitationsQuery
-            ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'groups_page');
-
-        // -------------------------
-        // Return dashboard view
-        // -------------------------
+        // Return dashboard view with all data
         return view('dashboard', compact(
+            'departmentCitations',
+            'groupCitations',
             'departmentsCount',
             'groupsCount',
-            'citationsCount',
-            'departmentCitations',
-            'groupCitations'
+            'citationsCount'
         ));
-    }
-
-    /**
-     * Return JSON counts for AJAX dashboard cards
-     */
-    public function getCounts()
-    {
-        $departmentsCount = DepartmentCitation::distinct('department')->count('department');
-        $groupsCount = GroupCitation::distinct('group_name')->count('group_name');
-        $citationsCount = GroupCitation::count() + DepartmentCitation::count();
-
-        return response()->json([
-            'departmentsCount' => $departmentsCount,
-            'groupsCount' => $groupsCount,
-            'citationsCount' => $citationsCount,
-        ]);
     }
 }
