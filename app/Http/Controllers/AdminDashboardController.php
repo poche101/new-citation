@@ -18,21 +18,14 @@ class AdminDashboardController extends Controller
         // -------------------------
         // Dashboard card counts
         // -------------------------
-
-        // Departments with at least one citation
         $departmentsCount = DepartmentCitation::distinct('department')->count('department');
-
-        // Groups with at least one citation
-       $groupsCount = GroupCitation::distinct('group_name')->count('group_name');
-
-        // Total citations submitted (group + department)
+        $groupsCount = GroupCitation::distinct('group_name')->count('group_name');
         $citationsCount = GroupCitation::count() + DepartmentCitation::count();
 
         // -------------------------
         // Department citations table
         // -------------------------
         $departmentCitationsQuery = DepartmentCitation::query();
-
         if ($search) {
             $departmentCitationsQuery->where(function ($q) use ($search) {
                 $q->where('fullname', 'like', "%{$search}%")
@@ -45,7 +38,6 @@ class AdminDashboardController extends Controller
                   ->orWhere('citation', 'like', "%{$search}%");
             });
         }
-
         $departmentCitations = $departmentCitationsQuery
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'departments_page');
@@ -54,7 +46,6 @@ class AdminDashboardController extends Controller
         // Group citations table
         // -------------------------
         $groupCitationsQuery = GroupCitation::query();
-
         if ($search) {
             $groupCitationsQuery->where(function ($q) use ($search) {
                 $q->where('fullname', 'like', "%{$search}%")
@@ -67,13 +58,12 @@ class AdminDashboardController extends Controller
                   ->orWhere('citation', 'like', "%{$search}%");
             });
         }
-
         $groupCitations = $groupCitationsQuery
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'groups_page');
 
         // -------------------------
-        // Return view with all data
+        // Return dashboard view
         // -------------------------
         return view('dashboard', compact(
             'departmentsCount',
@@ -82,5 +72,21 @@ class AdminDashboardController extends Controller
             'departmentCitations',
             'groupCitations'
         ));
+    }
+
+    /**
+     * Return JSON counts for AJAX dashboard cards
+     */
+    public function getCounts()
+    {
+        $departmentsCount = DepartmentCitation::distinct('department')->count('department');
+        $groupsCount = GroupCitation::distinct('group_name')->count('group_name');
+        $citationsCount = GroupCitation::count() + DepartmentCitation::count();
+
+        return response()->json([
+            'departmentsCount' => $departmentsCount,
+            'groupsCount' => $groupsCount,
+            'citationsCount' => $citationsCount,
+        ]);
     }
 }
