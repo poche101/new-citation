@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - CELZ5 Citation</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo2.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
@@ -364,29 +365,28 @@
         </script>
 
         @push('scripts')
-            {{-- AJAX CARDS --}}
-          <script>
-    async function updateDashboardCounts() {
-        try {
-            const response = await fetch("{{ route('admin.dashboard.counts') }}"); // ✅ updated route
-            const data = await response.json();
+            <script>
+                async function updateDashboardCounts() {
+                    try {
+                        const response = await fetch("{{ route('admin.dashboard.counts') }}");
+                        const data = await response.json();
 
-            document.getElementById('departments-count').textContent = data.departmentsCount;
-            document.getElementById('groups-count').textContent = data.groupsCount;
-            document.getElementById('citations-count').textContent = data.citationsCount;
-        } catch (error) {
-            console.error('Error fetching dashboard counts:', error);
-        }
-    }
+                        document.getElementById('departments-count').textContent = data.departmentsCount;
+                        document.getElementById('groups-count').textContent = data.groupsCount;
+                        document.getElementById('citations-count').textContent = data.citationsCount;
+                    } catch (error) {
+                        console.error('Error fetching dashboard counts:', error);
+                    }
+                }
 
-    // Initial load
-    updateDashboardCounts();
+                // Initial load
+                updateDashboardCounts();
 
-    // Refresh every 10 seconds
-    setInterval(updateDashboardCounts, 10000);
-</script>
-
+                // Refresh every 10 seconds
+                setInterval(updateDashboardCounts, 10000);
+            </script>
         @endpush
+
 
         <script>
             const searchInput = document.getElementById('groupSearch');
@@ -408,5 +408,3 @@
 </body>
 
 </html>
-
-
