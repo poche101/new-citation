@@ -236,6 +236,7 @@
         </div>
 
         <!-- Group Table -->
+         <h2 class="text-2xl text-white font-semibold my-6">Group Citations</h2>
         <div class="overflow-x-auto glass rounded-xl shadow-lg mb-10">
             <table class="min-w-full text-left border-collapse shadow-lg rounded-lg overflow-hidden" id="groupTable">
                 <thead
