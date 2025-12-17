@@ -211,8 +211,9 @@
 
         <!-- ===================== SEARCH & EXPORT GROUPS ===================== -->
         <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0">
-                     <h2 class="text-2xl text-white font-semibold my-6">Group Citations</h2>
             <!-- Group Search Bar -->
+                                 <h2 class="text-2xl text-white font-semibold my-6">Group Citations</h2>
+
             <div class="w-full md:w-1/3 relative mb-4">
                 <input type="text" id="groupSearch" placeholder="Search Group Table..."
                     class="glass p-3 pl-10 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300">
