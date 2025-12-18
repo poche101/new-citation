@@ -33,4 +33,28 @@ class AdminDashboardController extends Controller
             'citationsCount'
         ));
     }
+
+     /**
+     * Toggle approved status for a department citation
+     */
+    public function toggleDepartmentApproval($id)
+    {
+        $citation = DepartmentCitation::findOrFail($id);
+        $citation->approved = !$citation->approved;
+        $citation->save();
+
+        return redirect()->back()->with('success', 'Department citation approval status updated.');
+    }
+
+    /**
+     * Toggle approved status for a group citation
+     */
+    public function toggleGroupApproval($id)
+    {
+        $citation = GroupCitation::findOrFail($id);
+        $citation->approved = !$citation->approved;
+        $citation->save();
+
+        return redirect()->back()->with('success', 'Group citation approval status updated.');
+    }
 }
