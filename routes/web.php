@@ -95,3 +95,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::get('/groups', function() {
     return view('components.groups');
 });
+
+
+// Toggle department citation approval
+Route::patch('/admin/department-citation/{id}/toggle-approval',
+    [AdminDashboardController::class, 'toggleDepartmentApproval'])
+    ->name('admin.departmentCitation.toggleApproval');
+
+// Toggle group citation approval
+Route::patch('/admin/group-citation/{id}/toggle-approval',
+    [AdminDashboardController::class, 'toggleGroupApproval'])
+    ->name('admin.groupCitation.toggleApproval');
+
