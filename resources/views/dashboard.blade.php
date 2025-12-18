@@ -169,6 +169,7 @@
                         <th class="p-3">Department</th>
                         <th class="p-3">Period</th>
                         <th class="p-3">Citation</th>
+                        <th class="p-3">Approved Status</th>
                         <th class="p-3">Created At</th>
                     </tr>
                 </thead>
@@ -191,6 +192,28 @@
                                 View More
                             </button>
                                 @endif
+                            </td>
+                             <!-- Approved Status Column -->
+                            <td class="p-3">
+                                <form method="POST"
+                                    action="{{ route('admin.departmentCitation.toggleApproval', $citation->id) }}"
+                                    x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }"
+                                    @submit.prevent="
+                                        approved = !approved;
+                                        $el.submit();
+                                    ">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                        class="px-2 py-1 rounded transition-colors duration-500 ease-in-out"
+                                        :class="approved
+                                            ?
+                                            'bg-green-200/40 text-green-800 hover:bg-green-300/50' :
+                                            'bg-yellow-200/40 text-yellow-800 hover:bg-yellow-300/50'">
+                                        <span x-text="approved ? 'Approved' : 'Pending'"></span>
+                                    </button>
+                                </form>
+
                             </td>
                             <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
                         </tr>
@@ -251,6 +274,7 @@
                         <th class="p-3">Group Name</th>
                         <th class="p-3">Period</th>
                         <th class="p-3">Citation</th>
+                        <th class="p-3">Approved Status</th> 
                         <th class="p-3">Created At</th>
                     </tr>
                 </thead>
@@ -277,6 +301,26 @@
                                         View More
                                     </button>
                                 @endif
+                            </td>
+                             <td class="p-3">
+                                <form method="POST"
+                                    action="{{ route('admin.groupCitation.toggleApproval', $citation->id) }}"
+                                    x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }"
+                                    @submit.prevent="
+                              approved = !approved;
+                              $el.submit();
+                          ">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                        class="px-2 py-1 rounded transition-colors duration-500 ease-in-out text-sm font-medium"
+                                        :class="approved
+                                            ?
+                                            'bg-green-200/40 text-green-800 hover:bg-green-300/50' :
+                                            'bg-yellow-200/40 text-yellow-800 hover:bg-yellow-300/50'">
+                                        <span x-text="approved ? 'Approved' : 'Pending'"></span>
+                                    </button>
+                                </form>
                             </td>
                             <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
                         </tr>
