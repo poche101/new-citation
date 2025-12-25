@@ -10,15 +10,13 @@ class GroupCitation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title',
-        'name',
-        'unit',
-        'designation',
-        'kingschat',
-        'phone',
-        'group_name',
-        'period_from',
-        'period_to',
-        'description',
+        'title', 'name', 'unit', 'designation', 'kingschat', 'phone',
+        'group_name', 'period_from', 'period_to', 'description', 'admin_comment', 'approved'
+    ];
+
+    // Cast period fields to Carbon
+    protected $casts = [
+        'period_from' => 'datetime',
+        'period_to' => 'datetime',
     ];
 }

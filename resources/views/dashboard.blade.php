@@ -170,6 +170,7 @@
                         <th class="p-3">Period</th>
                         <th class="p-3">Citation</th>
                         <th class="p-3">Approved Status</th>
+                        <th class="p-3">Admin Comment</th>
                         <th class="p-3">Created At</th>
                     </tr>
                 </thead>
@@ -187,21 +188,23 @@
                             <td class="p-3 flex items-center space-x-2">
                                 <span>{{ Str::limit($citation->citation ?? 'N/A', 30, '...') }}</span>
                                 @if (strlen($citation->citation ?? '') > 30)
-                            <button onclick="openDepartmentModal({{ json_encode($citation->fullname) }}, {{ json_encode($citation->citation) }})"
-                                class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
-                                View More
-                            </button>
+                                    <button
+                                        onclick="openDepartmentModal({{ json_encode($citation->fullname) }}, {{ json_encode($citation->citation) }})"
+                                        class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
+                                        View More
+                                    </button>
                                 @endif
                             </td>
-                             <!-- Approved Status Column -->
+
+                            <!-- Approved Status Column -->
                             <td class="p-3">
                                 <form method="POST"
                                     action="{{ route('admin.departmentCitation.toggleApproval', $citation->id) }}"
                                     x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }"
                                     @submit.prevent="
-                                        approved = !approved;
-                                        $el.submit();
-                                    ">
+                                approved = !approved;
+                                $el.submit();
+                            ">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
@@ -213,13 +216,90 @@
                                         <span x-text="approved ? 'Approved' : 'Pending'"></span>
                                     </button>
                                 </form>
-
                             </td>
+
+                            <!-- Admin Comment Column -->
+                            <!-- Admin Comment Column -->
+                            <td class="p-3" x-data="{
+                                comment: '{{ $citation->admin_comment ?? '' }}',
+                                editing: false,
+                                modalOpen: false,
+                                saveComment() {
+                                    fetch('{{ route('admin.departmentCitation.comment', $citation->id) }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ comment: this.comment })
+                                    }).then(() => this.editing = false);
+                                },
+                                deleteComment() {
+                                    fetch('{{ route('admin.departmentCitation.comment', $citation->id) }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ comment: null })
+                                    }).then(() => {
+                                        this.comment = '';
+                                        this.editing = false;
+                                        this.modalOpen = false;
+                                    });
+                                }
+                            }">
+                                <!-- Display Mode -->
+                                <template x-if="!editing">
+                                    <div class="flex justify-between items-center">
+                                        <span
+                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No comment yet'"
+                                            class="text-white/90"></span>
+                                        <div class="flex gap-1">
+                                            <button @click="editing = true"
+                                                class="text-indigo-400 hover:text-indigo-200 text-sm">Edit</button>
+                                            <button x-show="comment.length > 20" @click="modalOpen = true"
+                                                class="text-indigo-300 underline text-sm hover:text-indigo-100">View
+                                                More</button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Edit Mode -->
+                                <template x-if="editing">
+                                    <div class="flex flex-col space-y-1">
+                                        <textarea x-model="comment" rows="2"
+                                            class="w-full px-2 py-1 rounded bg-white/10 text-white/90 placeholder-white/50 resize-none"
+                                            placeholder="Add a review..."></textarea>
+                                        <div class="flex gap-2">
+                                            <button @click="saveComment()"
+                                                class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Save</button>
+                                            <button @click="deleteComment()"
+                                                class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-sm">Delete</button>
+                                            <button @click="editing=false"
+                                                class="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm">Cancel</button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Modal -->
+                                <div x-show="modalOpen"
+                                    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" x-cloak>
+                                    <div class="bg-gray-900 text-white p-6 rounded-lg w-11/12 max-w-lg relative">
+                                        <h3 class="text-lg font-semibold mb-2">Admin Comment</h3>
+                                        <p x-text="comment || 'No comment yet'" class="whitespace-pre-wrap"></p>
+                                        <button @click="modalOpen = false"
+                                            class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm">Close</button>
+                                    </div>
+                                </div>
+                            </td>
+
+
                             <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="p-4 text-center text-white/80">No department citations found.
+                            <td colspan="12" class="p-4 text-center text-white/80">No department citations found.
                             </td>
                         </tr>
                     @endforelse
@@ -232,8 +312,11 @@
             </div>
         </div>
 
+
+
+
         <!-- ===================== SEARCH & EXPORT GROUPS ===================== -->
-                                         <h2 class="text-2xl text-white font-semibold my-6">Group Citations</h2>
+        <h2 class="text-2xl text-white font-semibold my-6">Group Citations</h2>
         <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0">
             <!-- Group Search Bar -->
             <div class="w-full md:w-1/3 relative mb-4">
@@ -274,7 +357,8 @@
                         <th class="p-3">Group Name</th>
                         <th class="p-3">Period</th>
                         <th class="p-3">Citation</th>
-                        <th class="p-3">Approved Status</th> 
+                        <th class="p-3">Approved Status</th>
+                        <th class="p-3">Admin Comment</th>
                         <th class="p-3">Created At</th>
                     </tr>
                 </thead>
@@ -282,55 +366,128 @@
                     @forelse ($groupCitations as $citation)
                         <tr class="hover:bg-white/10 transition-all">
                             <td class="p-3">{{ $citation->title ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->name ?? 'N/A' }}</td> <!-- Changed from fullname -->
+                            <td class="p-3">{{ $citation->name ?? 'N/A' }}</td>
                             <td class="p-3">{{ $citation->unit ?? 'N/A' }}</td>
                             <td class="p-3">{{ $citation->designation ?? 'N/A' }}</td>
                             <td class="p-3">{{ $citation->kingschat ?? 'N/A' }}</td>
                             <td class="p-3">{{ $citation->phone ?? 'N/A' }}</td>
                             <td class="p-3">{{ $citation->group_name ?? 'N/A' }}</td>
                             <td class="p-3">
-                                {{ $citation->period_from ? \Carbon\Carbon::parse($citation->period_from)->format('d-m-Y') : 'N/A' }}
+                                {{ $citation->period_from ? $citation->period_from->format('d-m-Y') : 'N/A' }}
                                 –
-                                {{ $citation->period_to ? \Carbon\Carbon::parse($citation->period_to)->format('d-m-Y') : 'N/A' }}
+                                {{ $citation->period_to ? $citation->period_to->format('d-m-Y') : 'N/A' }}
                             </td>
                             <td class="p-3 flex items-center space-x-2">
-                                <span>{{ Str::limit($citation->description ?? 'N/A', 30, '...') }}</span>
-                                @if (strlen($citation->description ?? '') > 30)
-                                    <button onclick="openGroupModal({{ json_encode($citation->fullname) }}, {{ json_encode($citation->description) }})"
+                                <span>{{ Str::limit($citation->description, 30, '...') }}</span>
+                                @if (strlen($citation->description) > 30)
+                                    <button onclick="alert('{{ $citation->description }}')"
                                         class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
                                         View More
                                     </button>
                                 @endif
                             </td>
-                             <td class="p-3">
+                            <td class="p-3">
                                 <form method="POST"
                                     action="{{ route('admin.groupCitation.toggleApproval', $citation->id) }}"
-                                    x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }"
-                                    @submit.prevent="
-                              approved = !approved;
-                              $el.submit();
-                          ">
+                                    x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }" @submit.prevent="approved = !approved; $el.submit()">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                        class="px-2 py-1 rounded transition-colors duration-500 ease-in-out text-sm font-medium"
-                                        :class="approved
-                                            ?
-                                            'bg-green-200/40 text-green-800 hover:bg-green-300/50' :
+                                        class="px-2 py-1 rounded transition-colors duration-500 text-sm font-medium"
+                                        :class="approved ? 'bg-green-200/40 text-green-800 hover:bg-green-300/50' :
                                             'bg-yellow-200/40 text-yellow-800 hover:bg-yellow-300/50'">
                                         <span x-text="approved ? 'Approved' : 'Pending'"></span>
                                     </button>
                                 </form>
                             </td>
+
+                            <!-- Admin Comment -->
+                            <!-- Admin Comment Column -->
+                            <td class="p-3" x-data="{
+                                comment: '{{ $citation->admin_comment ?? '' }}',
+                                editing: false,
+                                modalOpen: false,
+
+                                saveComment() {
+                                    fetch('{{ route('admin.groupCitation.comment', $citation->id) }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ comment: this.comment })
+                                    }).then(() => this.editing = false);
+                                },
+
+                                deleteComment() {
+                                    fetch('{{ route('admin.groupCitation.comment', $citation->id) }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ comment: null })
+                                    }).then(() => {
+                                        this.comment = '';
+                                        this.editing = false;
+                                        this.modalOpen = false;
+                                    });
+                                }
+                            }">
+                                <!-- Display Mode -->
+                                <template x-if="!editing">
+                                    <div class="flex justify-between items-center">
+                                        <span
+                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No comment yet'"
+                                            class="text-white/90"></span>
+                                        <div class="flex gap-1">
+                                            <button @click="editing = true"
+                                                class="text-indigo-400 hover:text-indigo-200 text-sm">Edit</button>
+                                            <button x-show="comment.length > 20" @click="modalOpen = true"
+                                                class="text-indigo-300 underline text-sm hover:text-indigo-100">View
+                                                More</button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Edit Mode -->
+                                <template x-if="editing">
+                                    <div class="flex flex-col space-y-1">
+                                        <textarea x-model="comment" rows="2"
+                                            class="w-full px-2 py-1 rounded bg-white/10 text-white/90 placeholder-white/50 resize-none"
+                                            placeholder="Add a comment..."></textarea>
+                                        <div class="flex gap-2">
+                                            <button @click="saveComment()"
+                                                class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Save</button>
+                                            <button @click="deleteComment()"
+                                                class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-sm">Delete</button>
+                                            <button @click="editing=false"
+                                                class="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm">Cancel</button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Modal -->
+                                <div x-show="modalOpen"
+                                    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" x-cloak>
+                                    <div class="bg-gray-900 text-white p-6 rounded-lg w-11/12 max-w-lg relative">
+                                        <h3 class="text-lg font-semibold mb-2">Admin Comment</h3>
+                                        <p x-text="comment || 'No comment yet'" class="whitespace-pre-wrap"></p>
+                                        <button @click="modalOpen = false"
+                                            class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm">Close</button>
+                                    </div>
+                                </div>
+                            </td>
+
+
                             <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="p-4 text-center text-white/80">No group citations found.</td>
+                            <td colspan="12" class="p-4 text-center text-white/80">No group citations found.</td>
                         </tr>
                     @endforelse
                 </tbody>
-
             </table>
 
             {{-- Pagination --}}
@@ -338,6 +495,7 @@
                 {{ $groupCitations->links() }}
             </div>
         </div>
+
 
 
         <!-- ===================== MODALS ===================== -->

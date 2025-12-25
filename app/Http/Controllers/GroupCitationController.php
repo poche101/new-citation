@@ -14,8 +14,7 @@ class GroupCitationController extends Controller
      */
     public function create()
     {
-        $groups = Group::all(); // ✅ FIXED
-
+        $groups = Group::all();
         return view('components.group-form', compact('groups'));
     }
 
@@ -53,9 +52,7 @@ class GroupCitationController extends Controller
                 $periodFrom = Carbon::parse(trim($from));
                 $periodTo   = Carbon::parse(trim($to));
             } catch (\Exception $e) {
-                return back()->withErrors([
-                    'period' => 'Invalid period format.'
-                ])->withInput();
+                return back()->withErrors(['period' => 'Invalid period format.'])->withInput();
             }
         }
 
@@ -72,8 +69,42 @@ class GroupCitationController extends Controller
             'description' => $request->description,
         ]);
 
-        return redirect()
-            ->route('group-citations.create')
-            ->with('success', 'Citation submitted successfully.');
+        return redirect()->route('group-citations.create')->with('success', 'Citation submitted successfully.');
     }
+
+    /**
+     * Toggle approval status
+     */
+    public function toggleApproval($id)
+    {
+        $citation = GroupCitation::findOrFail($id);
+        $citation->approved = !$citation->approved;
+        $citation->save();
+
+        return redirect()->back()->with('success', 'Approval status updated.');
+    }
+
+    /**
+     * Store, update, or delete admin comment
+     */
+
+    public function storeComment(Request $request, $id)
+{
+    $citation = GroupCitation::findOrFail($id);
+
+    $data = json_decode($request->getContent(), true);
+
+    $comment = $data['comment'] ?? null;
+
+    $citation->admin_comment = $comment;
+    $citation->save();
+
+    return response()->json([
+        'success' => true,
+        'comment' => $citation->admin_comment
+    ]);
 }
+
+}
+
+

@@ -50,6 +50,39 @@ class DepartmentCitationController extends Controller
     }
 
     /**
+     * Toggle approval status for a citation
+     */
+    public function toggleApproval($id)
+    {
+        $citation = DepartmentCitation::findOrFail($id);
+        $citation->approved = !$citation->approved;
+        $citation->save();
+
+        return redirect()->back()->with('success', 'Approval status updated.');
+    }
+
+    /**
+     * Store, update, or delete admin comment (AJAX)
+     */
+    public function storeComment(Request $request, $id)
+    {
+        $citation = DepartmentCitation::findOrFail($id);
+
+        $request->validate([
+            'comment' => 'nullable|string|max:500',
+        ]);
+
+        // Save or delete comment
+        $citation->admin_comment = $request->comment;
+        $citation->save();
+
+        return response()->json([
+            'success' => true,
+            'comment' => $citation->admin_comment
+        ]);
+    }
+
+    /**
      * Export all department citations as Excel
      */
     public function exportExcel()
@@ -72,7 +105,10 @@ class DepartmentCitationController extends Controller
 
         $callback = function () use ($citations) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Title', 'Full Name', 'Unit', 'Department', 'Designation', 'Kingschat', 'Phone', 'Citation', 'Period']);
+            fputcsv($file, [
+                'Title', 'Full Name', 'Unit', 'Department', 'Designation',
+                'Kingschat', 'Phone', 'Citation', 'Period', 'Admin Comment', 'Approved'
+            ]);
 
             foreach ($citations as $citation) {
                 fputcsv($file, [
@@ -85,6 +121,8 @@ class DepartmentCitationController extends Controller
                     $citation->phone,
                     $citation->citation,
                     $citation->period,
+                    $citation->admin_comment ?? '',
+                    $citation->approved ? 'Approved' : 'Pending',
                 ]);
             }
 

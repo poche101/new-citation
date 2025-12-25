@@ -1,24 +1,22 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Factories;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\User; // make sure this is correct
 
-class AdminSeeder extends Seeder
+class UserFactory extends Factory
 {
-    public function run(): void
+    protected $model = User::class;
+
+    public function definition(): array
     {
-        User::updateOrCreate(
-            ['email' => 'admin@example.com'], // check if already exists
-            [
-                'name' => 'Admin User',
-                'email_verified_at' => now(),
-                'password' => bcrypt('password'), // change to a secure password
-                'remember_token' => Str::random(10),
-                'is_admin' => true, // if you have a flag
-            ]
-        );
+        return [
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => bcrypt('password'),
+            'remember_token' => \Str::random(10),
+        ];
     }
 }

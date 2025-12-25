@@ -107,3 +107,14 @@ Route::patch('/admin/group-citation/{id}/toggle-approval',
     [AdminDashboardController::class, 'toggleGroupApproval'])
     ->name('admin.groupCitation.toggleApproval');
 
+// Toggle approval
+Route::patch('/admin/department-citation/{id}/toggle-approval', [DepartmentCitationController::class, 'toggleApproval'])
+    ->name('admin.departmentCitation.toggleApproval');
+
+// Store/edit/delete admin comment (AJAX)
+Route::post('/admin/department-citation/{id}/comment', [DepartmentCitationController::class, 'storeComment'])
+    ->name('admin.departmentCitation.comment');
+
+
+Route::post('/admin/group-citation/{id}/comment', [GroupCitationController::class, 'storeComment'])
+    ->name('admin.groupCitation.comment');
