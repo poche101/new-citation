@@ -253,7 +253,7 @@
                                 <template x-if="!editing">
                                     <div class="flex justify-between items-center">
                                         <span
-                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No comment yet'"
+                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No feedback yet'"
                                             class="text-white/90"></span>
                                         <div class="flex gap-1">
                                             <button @click="editing = true"
@@ -287,7 +287,7 @@
                                     class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" x-cloak>
                                     <div class="bg-gray-900 text-white p-6 rounded-lg w-11/12 max-w-lg relative">
                                         <h3 class="text-lg font-semibold mb-2">HOO's Feedback</h3>
-                                        <p x-text="comment || 'No comment yet'" class="whitespace-pre-wrap"></p>
+                                        <p x-text="comment || 'No feedback yet'" class="whitespace-pre-wrap"></p>
                                         <button @click="modalOpen = false"
                                             class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm">Close</button>
                                     </div>
@@ -438,7 +438,7 @@
                                 <template x-if="!editing">
                                     <div class="flex justify-between items-center">
                                         <span
-                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No comment yet'"
+                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No feedback yet'"
                                             class="text-white/90"></span>
                                         <div class="flex gap-1">
                                             <button @click="editing = true"
@@ -472,7 +472,7 @@
                                     class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" x-cloak>
                                     <div class="bg-gray-900 text-white p-6 rounded-lg w-11/12 max-w-lg relative">
                                         <h3 class="text-lg font-semibold mb-2">HOO's Feedback</h3>
-                                        <p x-text="comment || 'No comment yet'" class="whitespace-pre-wrap"></p>
+                                        <p x-text="comment || 'No feedback yet'" class="whitespace-pre-wrap"></p>
                                         <button @click="modalOpen = false"
                                             class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm">Close</button>
                                     </div>
