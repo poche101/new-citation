@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Department;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminDepartmentController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DepartmentCitationController;
 use App\Http\Controllers\GroupController;
@@ -17,28 +19,13 @@ use App\Http\Controllers\GroupExportController;
 // Homepage
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Departments listing page (simple closure example)
+// Departments listing page (read from the database, departments only)
 Route::get('/departments', function () {
-    $departments = [
-        ['name' => 'Cell Ministry', 'icon' => 'users'],
-        ['name' => 'Zonal Operations', 'icon' => 'settings'],
-        ['name' => 'Church Admin / Pioneering & Visitation', 'icon' => 'clipboard'],
-        ['name' => 'Rhapsody of Realities', 'icon' => 'book-open'],
-        ['name' => 'Healing School', 'icon' => 'heart'],
-        ['name' => 'Finance', 'icon' => 'credit-card'],
-        ['name' => 'TV Production', 'icon' => 'video'],
-        ['name' => 'Ministry Material', 'icon' => 'file-text'],
-        ['name' => 'Foundation School & First Timer Ministries', 'icon' => 'user-plus'],
-        ['name' => 'Love World Music Department', 'icon' => 'music'],
-        ['name' => 'Global Mission / HR / Admin', 'icon' => 'globe'],
-        ['name' => 'Children & Women Ministries', 'icon' => 'users'],
-        ['name' => 'LMMS, LXP, Ministry Programs, Bibles Partnership', 'icon' => 'book'],
-        ['name' => 'LW USA, LTM / Radio Brands, Inner City Missions', 'icon' => 'flag'],
-        ['name' => 'Follow Up Department', 'icon' => 'refresh-cw'],
-        ['name' => 'Prayer', 'icon' => 'heart'],
-        ['name' => 'Evangelism', 'icon' => 'send'],
-        ['name' => 'Sceptre', 'icon' => 'star'],
-    ];
+    $departments = Department::where('type', 'department')
+        ->orderBy('id')
+        ->get()
+        ->map(fn ($d) => ['name' => $d->name, 'icon' => 'folder'])
+        ->all();
 
     return view('components.departments', compact('departments'));
 })->name('departments.index');
@@ -52,69 +39,63 @@ Route::post('/group-form', [GroupCitationController::class, 'store'])->name('gro
 Route::get('/department-form', [DepartmentCitationController::class, 'create'])->name('department-form.create');
 Route::post('/department-form', [DepartmentCitationController::class, 'store'])->name('department-form.store');
 
-// Export routes for groups
-Route::prefix('groups')->group(function () {
-    Route::get('export/excel', [GroupExportController::class, 'exportExcel'])->name('groups.exportExcel');
-    Route::get('export/csv', [GroupExportController::class, 'exportCSV'])->name('groups.exportCSV');
-    Route::get('export/pdf', [GroupExportController::class, 'exportPDF'])->name('groups.exportPDF');
-    Route::get('export/word', [GroupExportController::class, 'exportWord'])->name('groups.exportWord');
-});
-
-// Export routes for departments
-Route::prefix('departments')->group(function () {
-    Route::get('export/excel', [DepartmentCitationController::class, 'exportExcel'])->name('departments.exportExcel');
-    Route::get('export/csv', [DepartmentCitationController::class, 'exportCSV'])->name('departments.exportCSV');
-    Route::get('export/pdf', [DepartmentCitationController::class, 'exportPDF'])->name('departments.exportPDF');
-    Route::get('export/word', [DepartmentCitationController::class, 'exportWord'])->name('departments.exportWord');
-});
-
-// -------------------------
-// Admin Routes
-// -------------------------
-Route::prefix('admin')->name('admin.')->group(function () {
-
-    // Login routes
-    Route::get('login', [AdminController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [AdminController::class, 'login'])->name('login.submit');
-
-    // Logout
-    Route::post('logout', [AdminController::class, 'logout'])->name('logout')->middleware('auth:admin');
-
-    // Dashboard
-    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-    // Dashboard counts API (if used via JS/AJAX)
-  Route::get('/admin/dashboard/counts', [AdminDashboardController::class, 'getCounts'])
-     ->name('dashboard.counts'); // remove admin. prefix
-
-});
-
-// -------------------------
 // Simple static pages (optional)
-// -------------------------
-Route::get('/groups', function() {
+Route::get('/groups', function () {
     return view('components.groups');
 });
 
+// -------------------------
+// Exports (admin only)
+// -------------------------
+Route::middleware('auth:admin')->group(function () {
+    Route::prefix('groups')->group(function () {
+        Route::get('export/excel', [GroupExportController::class, 'exportExcel'])->name('groups.exportExcel');
+        Route::get('export/csv', [GroupExportController::class, 'exportCSV'])->name('groups.exportCSV');
+        Route::get('export/pdf', [GroupExportController::class, 'exportPDF'])->name('groups.exportPDF');
+        Route::get('export/word', [GroupExportController::class, 'exportWord'])->name('groups.exportWord');
+    });
 
-// Toggle department citation approval
-Route::patch('/admin/department-citation/{id}/toggle-approval',
-    [AdminDashboardController::class, 'toggleDepartmentApproval'])
-    ->name('admin.departmentCitation.toggleApproval');
+    Route::prefix('departments')->group(function () {
+        Route::get('export/excel', [DepartmentCitationController::class, 'exportExcel'])->name('departments.exportExcel');
+        Route::get('export/csv', [DepartmentCitationController::class, 'exportCSV'])->name('departments.exportCSV');
+        Route::get('export/pdf', [DepartmentCitationController::class, 'exportPDF'])->name('departments.exportPDF');
+        Route::get('export/word', [DepartmentCitationController::class, 'exportWord'])->name('departments.exportWord');
+    });
+});
 
-// Toggle group citation approval
-Route::patch('/admin/group-citation/{id}/toggle-approval',
-    [AdminDashboardController::class, 'toggleGroupApproval'])
-    ->name('admin.groupCitation.toggleApproval');
+// -------------------------
+// Admin Routes (URLs: /admin/..., names: admin....)
+// -------------------------
+Route::prefix('admin')->name('admin.')->group(function () {
 
-// Toggle approval
-Route::patch('/admin/department-citation/{id}/toggle-approval', [DepartmentCitationController::class, 'toggleApproval'])
-    ->name('admin.departmentCitation.toggleApproval');
+    // Login (guests)
+    Route::get('login', [AdminController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [AdminController::class, 'login'])->name('login.submit');
 
-// Store/edit/delete admin comment (AJAX)
-Route::post('/admin/department-citation/{id}/comment', [DepartmentCitationController::class, 'storeComment'])
-    ->name('admin.departmentCitation.comment');
+    // Everything below requires an admin session
+    Route::middleware('auth:admin')->group(function () {
 
+        Route::post('logout', [AdminController::class, 'logout'])->name('logout');
 
-Route::post('/admin/group-citation/{id}/comment', [GroupCitationController::class, 'storeComment'])
-    ->name('admin.groupCitation.comment');
+        // Dashboard
+        Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // Manage departments & groups (list, add, edit, delete)
+        Route::get('departments', [AdminDepartmentController::class, 'index'])->name('departments.index');
+        Route::post('departments', [AdminDepartmentController::class, 'store'])->name('departments.store');
+        Route::put('departments/{department}', [AdminDepartmentController::class, 'update'])->name('departments.update');
+        Route::delete('departments/{department}', [AdminDepartmentController::class, 'destroy'])->name('departments.destroy');
+
+        // Approval toggles
+        Route::patch('department-citation/{id}/toggle-approval', [AdminDashboardController::class, 'toggleDepartmentApproval'])
+            ->name('departmentCitation.toggleApproval');
+        Route::patch('group-citation/{id}/toggle-approval', [AdminDashboardController::class, 'toggleGroupApproval'])
+            ->name('groupCitation.toggleApproval');
+
+        // Admin comments (AJAX)
+        Route::post('department-citation/{id}/comment', [DepartmentCitationController::class, 'storeComment'])
+            ->name('departmentCitation.comment');
+        Route::post('group-citation/{id}/comment', [GroupCitationController::class, 'storeComment'])
+            ->name('groupCitation.comment');
+    });
+});

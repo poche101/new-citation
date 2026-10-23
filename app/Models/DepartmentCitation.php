@@ -19,5 +19,11 @@ class DepartmentCitation extends Model
         'department',
         'period',
         'citation',
+        'approved',
+        'admin_comment',
+    ];
+
+    protected $casts = [
+        'approved' => 'boolean',
     ];
 }

@@ -33,7 +33,7 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        return view('dashboard'); // create resources/views/admin/dashboard.blade.php
+        return app(AdminDashboardController::class)->index();
     }
 
     public function logout(Request $request)

@@ -1,611 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - CELZ5 Citation</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Dashboard - CELZ5 Citation</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo2.png') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script src="//unpkg.com/alpinejs" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: {
+            fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+            colors: { ink: '#14213D', paper: '#F4F6F9', teal: { DEFAULT: '#0F766E', soft: '#E3F2F0' }, gold: { DEFAULT: '#B8893B', soft: '#F7EEDC' } }
+        } } }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>[x-cloak]{display:none!important}</style>
 </head>
 
-<body class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-['Inter'] min-h-screen p-6">
-    <!-- Admin Navbar -->
-    <!-- Admin Navbar -->
-    <nav
-        class="bg-[rgba(255,255,255,0.06)] backdrop-blur-md border-b border-[rgba(255,255,255,0.12)] px-6 py-3 flex items-center justify-between">
+@php
+    $approved = $stats['approved'] ?? 0;
+    $pending = $stats['pending'] ?? 0;
+    $total = max($approved + $pending, 1);
+    $rate = round($approved / $total * 100);
+@endphp
 
-        @php
-            // Get the logged-in user
-            $user = auth()->user();
+<body class="bg-paper font-sans text-ink antialiased"
+      x-data="dashboard()" x-init="initCharts()">
 
-            // Use name if available, else fallback to 'Admin'
-            $fullName = $user?->name ?? 'Admin';
+    {{-- Top bar + menu --}}
+    @include('admin.partials.header')
 
-            // Generate initials (first 2 letters of words)
-            $initials = collect(explode(' ', $fullName))
-                ->map(fn($word) => strtoupper(substr($word, 0, 1)))
-                ->take(2)
-                ->implode('');
-        @endphp
+    <main class="mx-auto max-w-7xl px-5 py-8">
 
-        <!-- Left: Logo / Brand -->
-        <div class="flex items-center space-x-3">
-            <div class="h-8 w-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-semibold">
-                {{ $initials }}
+        @if (session('success'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
+                 class="mb-6 rounded-xl border border-teal/20 bg-teal-soft px-4 py-3 text-sm font-medium text-teal">
+                {{ session('success') }}
             </div>
-            <span class="text-white font-semibold text-lg">
-                {{ $fullName }}
-            </span>
-        </div>
-
-        <!-- Right: Logout Button -->
-        @if (Auth::guard('admin')->check())
-            <form method="POST" action="{{ route('admin.logout') }}">
-                @csrf
-                <button type="submit"
-                    class="px-4 py-2 rounded-md bg-red-500/30 hover:bg-red-500/50 text-white transition">
-                    Logout
-                </button>
-            </form>
         @endif
 
-    </nav>
+        {{-- Heading + primary action --}}
+        <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">Citations overview</h1>
+                <p class="mt-1 text-sm text-slate-500">Track submissions across departments and groups, and review what needs approval.</p>
+            </div>
+            <button @click="deptModal = true"
+                    class="rounded-xl bg-teal px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2">
+                Add department or group
+            </button>
+        </div>
 
+        {{-- Stats --}}
+        <section class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            @foreach ([
+                ['Departments', $departmentsCount, 'text-ink'],
+                ['Groups', $groupsCount, 'text-ink'],
+                ['Citations submitted', $citationsCount, 'text-ink'],
+                ['Approval rate', $rate . '%', 'text-teal'],
+            ] as [$label, $value, $color])
+                <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200/70">
+                    <p class="text-sm text-slate-500">{{ $label }}</p>
+                    <p class="mt-2 text-3xl font-extrabold tabular-nums {{ $color }}">{{ $value }}</p>
+                </div>
+            @endforeach
+        </section>
 
-    <br>
-    <br>
-
-
-    <div class="container mx-auto" x-data="citationDashboard()">
-
-        <!-- Header -->
-        <header class="mb-8 text-white">
-            <h1 class="text-4xl font-bold mb-2 drop-shadow-lg">Citation Submission Dashboard</h1>
-            <p class="text-white/80">Manage Departments, Groups & Citations</p>
-        </header>
-
-        <!-- Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-
-            <!-- Departments Card -->
-            <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
-                <div class="flex items-center space-x-4">
-                    <i data-feather="server" class="w-10 h-10 text-indigo-400"></i>
-                    <div>
-                        <h2 class="text-xl font-semibold text-white">Departments</h2>
-                        <p class="text-gray-300 mt-1">
-                            Total Departments: <span class="font-bold">{{ $departmentsCount }}</span>
-                        </p>
+        {{-- Analytics --}}
+        <section class="mt-4 grid gap-4 lg:grid-cols-3">
+            <div class="rounded-2xl bg-white p-6 ring-1 ring-slate-200/70 lg:col-span-2">
+                <h2 class="font-semibold">Submissions, last 30 days</h2>
+                <p class="mb-4 text-sm text-slate-500">Departments and groups combined</p>
+                <div class="h-64"><canvas id="trendChart"></canvas></div>
+            </div>
+            <div class="rounded-2xl bg-white p-6 ring-1 ring-slate-200/70">
+                <h2 class="font-semibold">Review status</h2>
+                <p class="mb-4 text-sm text-slate-500">{{ $approved }} approved, {{ $pending }} pending</p>
+                <div class="relative mx-auto h-52 w-52">
+                    <canvas id="statusChart"></canvas>
+                    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-3xl font-extrabold">{{ $rate }}%</span>
+                        <span class="text-xs text-slate-500">approved</span>
                     </div>
                 </div>
             </div>
+            <div class="rounded-2xl bg-white p-6 ring-1 ring-slate-200/70 lg:col-span-3">
+                <h2 class="font-semibold">Citations by department</h2>
+                <p class="mb-4 text-sm text-slate-500">Which departments submit the most</p>
+                <div class="h-72"><canvas id="deptChart"></canvas></div>
+            </div>
+        </section>
 
-            <!-- Groups Card -->
-            <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
-                <div class="flex items-center space-x-4">
-                    <i data-feather="users" class="w-10 h-10 text-green-400"></i>
-                    <div>
-                        <h2 class="text-xl font-semibold text-white">Groups</h2>
-                        <p class="text-gray-300 mt-1">
-                            Total Groups: <span class="font-bold">{{ $groupsCount }}</span>
-                        </p>
-                    </div>
+        {{-- Tables --}}
+        <section class="mt-8 rounded-2xl bg-white ring-1 ring-slate-200/70">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
+                <div class="inline-flex rounded-xl bg-paper p-1 text-sm font-semibold">
+                    <button @click="tab = 'dept'" :class="tab === 'dept' ? 'bg-white shadow-sm text-ink' : 'text-slate-500'" class="rounded-lg px-4 py-1.5">Department citations</button>
+                    <button @click="tab = 'group'" :class="tab === 'group' ? 'bg-white shadow-sm text-ink' : 'text-slate-500'" class="rounded-lg px-4 py-1.5">Group citations</button>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="search" x-model="q" placeholder="Search this table"
+                           class="w-56 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20">
+                    <template x-if="tab === 'dept'">
+                        <div class="flex gap-1 text-sm font-medium">
+                            <a href="{{ route('departments.exportExcel') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">Excel</a>
+                            <a href="{{ route('departments.exportCSV') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">CSV</a>
+                            <a href="{{ route('departments.exportPDF') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">PDF</a>
+                            <a href="{{ route('departments.exportWord') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">Word</a>
+                        </div>
+                    </template>
+                    <template x-if="tab === 'group'">
+                        <div class="flex gap-1 text-sm font-medium">
+                            <a href="{{ route('groups.exportExcel') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">Excel</a>
+                            <a href="{{ route('groups.exportCSV') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">CSV</a>
+                            <a href="{{ route('groups.exportPDF') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">PDF</a>
+                            <a href="{{ route('groups.exportWord') }}" class="rounded-lg border border-slate-200 px-3 py-2 hover:bg-paper">Word</a>
+                        </div>
+                    </template>
                 </div>
             </div>
 
-            <!-- Citations Card -->
-            <div class="glass p-6 rounded-xl shadow-lg bg-white/20 backdrop-blur-md">
-                <div class="flex items-center space-x-4">
-                    <i data-feather="file-text" class="w-10 h-10 text-yellow-400"></i>
-                    <div>
-                        <h2 class="text-xl font-semibold text-white">Citations</h2>
-                        <p class="text-gray-300 mt-1">
-                            Total Citations Submitted: <span class="font-bold">{{ $citationsCount }}</span>
-                        </p>
-                    </div>
+            @foreach ([
+                ['dept', $departmentCitations, 'admin.departmentCitation'],
+                ['group', $groupCitations, 'admin.groupCitation'],
+            ] as [$key, $rows, $routeBase])
+                <div x-show="tab === '{{ $key }}'" x-cloak class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm" data-table="{{ $key }}">
+                        <thead class="bg-paper text-xs font-semibold text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">{{ $key === 'dept' ? 'Department' : 'Group' }}</th>
+                                <th class="px-4 py-3">Contact</th>
+                                <th class="px-4 py-3">Period</th>
+                                <th class="px-4 py-3">Citation</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Admin comment</th>
+                                <th class="px-4 py-3">Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse ($rows as $c)
+                                @php
+                                    $name = $key === 'dept' ? $c->fullname : $c->name;
+                                    $body = $key === 'dept' ? $c->citation : $c->description;
+                                    $period = $key === 'dept'
+                                        ? ($c->period ?? 'N/A')
+                                        : (($c->period_from?->format('d M Y') ?? 'N/A') . ' to ' . ($c->period_to?->format('d M Y') ?? 'N/A'));
+                                @endphp
+                                <tr x-show="match($el)" class="align-top hover:bg-paper/60">
+                                    <td class="px-4 py-3">
+                                        <p class="font-semibold">{{ $c->title }} {{ $name ?? 'N/A' }}</p>
+                                        <p class="text-xs text-slate-500">{{ $c->unit ?? 'N/A' }} / {{ $c->designation ?? 'N/A' }}</p>
+                                    </td>
+                                    <td class="px-4 py-3">{{ ($key === 'dept' ? $c->department : $c->group_name) ?? 'N/A' }}</td>
+                                    <td class="px-4 py-3">
+                                        <p>{{ $c->phone ?? 'N/A' }}</p>
+                                        <p class="text-xs text-slate-500">{{ $c->kingschat ?? '' }}</p>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3">{{ $period }}</td>
+                                    <td class="max-w-xs px-4 py-3">
+                                        <p>{{ Str::limit($body ?? 'N/A', 60) }}</p>
+                                        @if (strlen($body ?? '') > 60)
+                                            <button type="button" class="mt-1 text-xs font-semibold text-teal hover:underline"
+                                                    @click="open({{ Js::from($name) }}, {{ Js::from($body) }})">Read full citation</button>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <form method="POST" action="{{ route($routeBase . '.toggleApproval', $c->id) }}">
+                                            @csrf @method('PATCH')
+                                            <button class="rounded-full px-3 py-1 text-xs font-semibold {{ $c->approved ? 'bg-teal-soft text-teal' : 'bg-gold-soft text-gold' }}">
+                                                {{ $c->approved ? 'Approved' : 'Pending' }}
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td class="min-w-[14rem] px-4 py-3"
+                                        x-data="commentBox('{{ route($routeBase . '.comment', $c->id) }}', {{ Js::from($c->admin_comment ?? '') }})">
+                                        <div x-show="!editing" class="flex items-start justify-between gap-2">
+                                            <span class="text-slate-600" x-text="comment || 'No comment yet'"></span>
+                                            <button @click="editing = true" class="shrink-0 text-xs font-semibold text-teal hover:underline">Edit</button>
+                                        </div>
+                                        <div x-show="editing" x-cloak class="space-y-2">
+                                            <textarea x-model="comment" rows="2" class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20" placeholder="Add a comment"></textarea>
+                                            <div class="flex gap-2 text-xs font-semibold">
+                                                <button @click="save()" class="rounded-lg bg-teal px-3 py-1.5 text-white">Save</button>
+                                                <button @click="remove()" class="rounded-lg border border-slate-200 px-3 py-1.5 text-red-600">Delete</button>
+                                                <button @click="editing = false" class="px-2 py-1.5 text-slate-500">Cancel</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3 text-slate-500">{{ $c->created_at?->format('d M Y, H:i') ?? 'N/A' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="8" class="px-4 py-12 text-center text-slate-500">No {{ $key === 'dept' ? 'department' : 'group' }} citations yet. They appear here as soon as people submit.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    <div class="border-t border-slate-100 p-4">{{ $rows->links() }}</div>
                 </div>
-            </div>
+            @endforeach
+        </section>
+    </main>
 
+    {{-- Citation reader --}}
+    <div x-show="reader.open" x-cloak @keydown.escape.window="reader.open = false"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4" @click.self="reader.open = false">
+        <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <h3 class="text-lg font-bold" x-text="reader.name"></h3>
+            <p class="mt-3 whitespace-pre-wrap leading-relaxed text-slate-700" x-text="reader.body"></p>
+            <button @click="reader.open = false" class="mt-5 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white">Close</button>
         </div>
+    </div>
 
+    {{-- Add department or group --}}
+    <div x-show="deptModal" x-cloak @keydown.escape.window="deptModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4" @click.self="deptModal = false">
+        <form method="POST" action="{{ route('admin.departments.store') }}"
+              class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            @csrf
+            <h3 class="text-lg font-bold">Add department or group</h3>
+            <p class="mt-1 text-sm text-slate-500">It becomes available on the matching section of the submission form straight away.</p>
 
+            <fieldset class="mt-5">
+                <legend class="block text-sm font-semibold">Category</legend>
+                <div class="mt-1 grid grid-cols-2 gap-2">
+                    @foreach (['department' => 'Department', 'group' => 'Group'] as $value => $label)
+                        <label class="cursor-pointer">
+                            <input type="radio" name="type" value="{{ $value }}" class="peer sr-only"
+                                   @checked(old('type', 'department') === $value)>
+                            <span class="block rounded-xl border border-slate-200 px-3 py-2.5 text-center text-sm font-semibold text-slate-500 transition peer-checked:border-teal peer-checked:bg-teal-soft peer-checked:text-teal peer-focus-visible:ring-2 peer-focus-visible:ring-teal/40">
+                                {{ $label }}
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('type')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+            </fieldset>
 
-        <!-- Initialize Feather icons -->
-        <script>
-            feather.replace();
-        </script>
+            <label for="dept-name" class="mt-5 block text-sm font-semibold">Name</label>
+            <input id="dept-name" name="name" value="{{ old('name') }}" required maxlength="120" x-ref="deptName"
+                   x-effect="if (deptModal) $nextTick(() => $refs.deptName.focus())"
+                   class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20">
+            @error('name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
 
-        <br>
-        <br>
-
-        <!-- Departments Table -->
-        <h2 class="text-2xl text-white font-semibold my-6">Department Citations</h2>
-
-        <!-- Search & Export -->
-        <!-- ===================== SEARCH & EXPORT DEPARTMENT ===================== -->
-        <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0">
-            <!-- Department Search Bar -->
-            <div class="w-full md:w-1/3 relative mb-4">
-                <input type="text" id="departmentSearch" placeholder="Search Department Table..."
-                    class="glass p-3 pl-10 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300">
-                <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 pointer-events-none" fill="none"
-                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            <div class="mt-6 flex justify-end gap-2 text-sm font-semibold">
+                <button type="button" @click="deptModal = false" class="rounded-xl px-4 py-2 text-slate-500 hover:bg-paper">Cancel</button>
+                <button class="rounded-xl bg-teal px-5 py-2 text-white hover:bg-teal/90">Add</button>
             </div>
+        </form>
+    </div>
 
-            <!-- Department Export Buttons -->
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('departments.exportExcel') }}"
-                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 transition-all">Excel</a>
-                <a href="{{ route('departments.exportCSV') }}"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-all">CSV</a>
-                <a href="{{ route('departments.exportPDF') }}"
-                    class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition-all">PDF</a>
-                <a href="{{ route('departments.exportWord') }}"
-                    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-all">Word</a>
-            </div>
+    <script>
+        const chartData = {
+            trend: @json($stats['trend'] ?? ['labels' => [], 'values' => []]),
+            depts: @json($stats['byDepartment'] ?? ['labels' => [], 'values' => []]),
+            approved: {{ $approved }},
+            pending: {{ $pending }},
+        };
 
-        </div>
+        function commentBox(url, initial) {
+            return {
+                comment: initial, editing: false,
+                send(value) {
+                    return fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                        body: JSON.stringify({ comment: value })
+                    });
+                },
+                save() { this.send(this.comment).then(() => this.editing = false); },
+                remove() { this.send(null).then(() => { this.comment = ''; this.editing = false; }); }
+            };
+        }
 
-        <!-- Department Table -->
-        <div class="overflow-x-auto glass rounded-xl shadow-lg mb-10">
-            <table class="min-w-full text-left border-collapse shadow-lg rounded-lg overflow-hidden"
-                id="departmentTable">
-                <thead
-                    class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-sm tracking-wide">
-                    <tr>
-                        <th class="p-3">Title</th>
-                        <th class="p-3">Full Name</th>
-                        <th class="p-3">Unit</th>
-                        <th class="p-3">Designation</th>
-                        <th class="p-3">Kingschat Handle</th>
-                        <th class="p-3">Phone</th>
-                        <th class="p-3">Department</th>
-                        <th class="p-3">Period</th>
-                        <th class="p-3">Citation</th>
-                        <th class="p-3">Approved Status</th>
-                        <th class="p-3">Admin Comment</th>
-                        <th class="p-3">Created At</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white/5 text-white/90 divide-y divide-white/20">
-                    @forelse ($departmentCitations as $citation)
-                        <tr class="hover:bg-white/10 transition-all">
-                            <td class="p-3">{{ $citation->title ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->fullname ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->unit ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->designation ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->kingschat ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->phone ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->department ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->period ?? 'N/A' }}</td>
-                            <td class="p-3 flex items-center space-x-2">
-                                <span>{{ Str::limit($citation->citation ?? 'N/A', 30, '...') }}</span>
-                                @if (strlen($citation->citation ?? '') > 30)
-                                    <button
-                                        onclick="openDepartmentModal({{ json_encode($citation->fullname) }}, {{ json_encode($citation->citation) }})"
-                                        class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
-                                        View More
-                                    </button>
-                                @endif
-                            </td>
-
-                            <!-- Approved Status Column -->
-                            <td class="p-3">
-                                <form method="POST"
-                                    action="{{ route('admin.departmentCitation.toggleApproval', $citation->id) }}"
-                                    x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }"
-                                    @submit.prevent="
-                                approved = !approved;
-                                $el.submit();
-                            ">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit"
-                                        class="px-2 py-1 rounded transition-colors duration-500 ease-in-out"
-                                        :class="approved
-                                            ?
-                                            'bg-green-200/40 text-green-800 hover:bg-green-300/50' :
-                                            'bg-yellow-200/40 text-yellow-800 hover:bg-yellow-300/50'">
-                                        <span x-text="approved ? 'Approved' : 'Pending'"></span>
-                                    </button>
-                                </form>
-                            </td>
-
-                            <!-- Admin Comment Column -->
-                            <!-- Admin Comment Column -->
-                            <td class="p-3" x-data="{
-                                comment: '{{ $citation->admin_comment ?? '' }}',
-                                editing: false,
-                                modalOpen: false,
-                                saveComment() {
-                                    fetch('{{ route('admin.departmentCitation.comment', $citation->id) }}', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({ comment: this.comment })
-                                    }).then(() => this.editing = false);
-                                },
-                                deleteComment() {
-                                    fetch('{{ route('admin.departmentCitation.comment', $citation->id) }}', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({ comment: null })
-                                    }).then(() => {
-                                        this.comment = '';
-                                        this.editing = false;
-                                        this.modalOpen = false;
-                                    });
-                                }
-                            }">
-                                <!-- Display Mode -->
-                                <template x-if="!editing">
-                                    <div class="flex justify-between items-center">
-                                        <span
-                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No comment yet'"
-                                            class="text-white/90"></span>
-                                        <div class="flex gap-1">
-                                            <button @click="editing = true"
-                                                class="text-indigo-400 hover:text-indigo-200 text-sm">Edit</button>
-                                            <button x-show="comment.length > 20" @click="modalOpen = true"
-                                                class="text-indigo-300 underline text-sm hover:text-indigo-100">View
-                                                More</button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Edit Mode -->
-                                <template x-if="editing">
-                                    <div class="flex flex-col space-y-1">
-                                        <textarea x-model="comment" rows="2"
-                                            class="w-full px-2 py-1 rounded bg-white/10 text-white/90 placeholder-white/50 resize-none"
-                                            placeholder="Add a review..."></textarea>
-                                        <div class="flex gap-2">
-                                            <button @click="saveComment()"
-                                                class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Save</button>
-                                            <button @click="deleteComment()"
-                                                class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-sm">Delete</button>
-                                            <button @click="editing=false"
-                                                class="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm">Cancel</button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Modal -->
-                                <div x-show="modalOpen"
-                                    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" x-cloak>
-                                    <div class="bg-gray-900 text-white p-6 rounded-lg w-11/12 max-w-lg relative">
-                                        <h3 class="text-lg font-semibold mb-2">Admin Comment</h3>
-                                        <p x-text="comment || 'No comment yet'" class="whitespace-pre-wrap"></p>
-                                        <button @click="modalOpen = false"
-                                            class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm">Close</button>
-                                    </div>
-                                </div>
-                            </td>
-
-
-                            <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="12" class="p-4 text-center text-white/80">No department citations found.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-
-            {{-- Department Pagination --}}
-            <div class="mt-6">
-                {{ $departmentCitations->links() }}
-            </div>
-        </div>
-
-
-
-
-        <!-- ===================== SEARCH & EXPORT GROUPS ===================== -->
-        <h2 class="text-2xl text-white font-semibold my-6">Group Citations</h2>
-        <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0">
-            <!-- Group Search Bar -->
-            <div class="w-full md:w-1/3 relative mb-4">
-                <input type="text" id="groupSearch" placeholder="Search Group Table..."
-                    class="glass p-3 pl-10 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300">
-                <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400 pointer-events-none" fill="none"
-                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </div>
-
-            <!-- Group Export Buttons -->
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('groups.exportExcel') }}"
-                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 transition-all">Excel</a>
-                <a href="{{ route('groups.exportCSV') }}"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-all">CSV</a>
-                <a href="{{ route('groups.exportPDF') }}"
-                    class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition-all">PDF</a>
-                <a href="{{ route('groups.exportWord') }}"
-                    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-all">Word</a>
-            </div>
-        </div>
-
-        <!-- Group Table -->
-        <div class="overflow-x-auto glass rounded-xl shadow-lg mb-10">
-            <table class="min-w-full text-left border-collapse shadow-lg rounded-lg overflow-hidden" id="groupTable">
-                <thead
-                    class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-sm tracking-wide">
-                    <tr>
-                        <th class="p-3">Title</th>
-                        <th class="p-3">Full Name</th>
-                        <th class="p-3">Unit</th>
-                        <th class="p-3">Designation</th>
-                        <th class="p-3">Kingschat Handle</th>
-                        <th class="p-3">Phone</th>
-                        <th class="p-3">Group Name</th>
-                        <th class="p-3">Period</th>
-                        <th class="p-3">Citation</th>
-                        <th class="p-3">Approved Status</th>
-                        <th class="p-3">Admin Comment</th>
-                        <th class="p-3">Created At</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white/5 text-white/90 divide-y divide-white/20">
-                    @forelse ($groupCitations as $citation)
-                        <tr class="hover:bg-white/10 transition-all">
-                            <td class="p-3">{{ $citation->title ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->name ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->unit ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->designation ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->kingschat ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->phone ?? 'N/A' }}</td>
-                            <td class="p-3">{{ $citation->group_name ?? 'N/A' }}</td>
-                            <td class="p-3">
-                                {{ $citation->period_from ? $citation->period_from->format('d-m-Y') : 'N/A' }}
-                                –
-                                {{ $citation->period_to ? $citation->period_to->format('d-m-Y') : 'N/A' }}
-                            </td>
-                            <td class="p-3 flex items-center space-x-2">
-                                <span>{{ Str::limit($citation->description, 30, '...') }}</span>
-                                @if (strlen($citation->description) > 30)
-                                    <button onclick="alert('{{ $citation->description }}')"
-                                        class="text-indigo-400 underline ml-2 hover:text-indigo-200 transition-all">
-                                        View More
-                                    </button>
-                                @endif
-                            </td>
-                            <td class="p-3">
-                                <form method="POST"
-                                    action="{{ route('admin.groupCitation.toggleApproval', $citation->id) }}"
-                                    x-data="{ approved: {{ $citation->approved ? 'true' : 'false' }} }" @submit.prevent="approved = !approved; $el.submit()">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit"
-                                        class="px-2 py-1 rounded transition-colors duration-500 text-sm font-medium"
-                                        :class="approved ? 'bg-green-200/40 text-green-800 hover:bg-green-300/50' :
-                                            'bg-yellow-200/40 text-yellow-800 hover:bg-yellow-300/50'">
-                                        <span x-text="approved ? 'Approved' : 'Pending'"></span>
-                                    </button>
-                                </form>
-                            </td>
-
-                            <!-- Admin Comment -->
-                            <!-- Admin Comment Column -->
-                            <td class="p-3" x-data="{
-                                comment: '{{ $citation->admin_comment ?? '' }}',
-                                editing: false,
-                                modalOpen: false,
-
-                                saveComment() {
-                                    fetch('{{ route('admin.groupCitation.comment', $citation->id) }}', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({ comment: this.comment })
-                                    }).then(() => this.editing = false);
-                                },
-
-                                deleteComment() {
-                                    fetch('{{ route('admin.groupCitation.comment', $citation->id) }}', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({ comment: null })
-                                    }).then(() => {
-                                        this.comment = '';
-                                        this.editing = false;
-                                        this.modalOpen = false;
-                                    });
-                                }
-                            }">
-                                <!-- Display Mode -->
-                                <template x-if="!editing">
-                                    <div class="flex justify-between items-center">
-                                        <span
-                                            x-text="comment.length > 20 ? comment.substring(0,20)+'...' : comment || 'No comment yet'"
-                                            class="text-white/90"></span>
-                                        <div class="flex gap-1">
-                                            <button @click="editing = true"
-                                                class="text-indigo-400 hover:text-indigo-200 text-sm">Edit</button>
-                                            <button x-show="comment.length > 20" @click="modalOpen = true"
-                                                class="text-indigo-300 underline text-sm hover:text-indigo-100">View
-                                                More</button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Edit Mode -->
-                                <template x-if="editing">
-                                    <div class="flex flex-col space-y-1">
-                                        <textarea x-model="comment" rows="2"
-                                            class="w-full px-2 py-1 rounded bg-white/10 text-white/90 placeholder-white/50 resize-none"
-                                            placeholder="Add a comment..."></textarea>
-                                        <div class="flex gap-2">
-                                            <button @click="saveComment()"
-                                                class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm">Save</button>
-                                            <button @click="deleteComment()"
-                                                class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-sm">Delete</button>
-                                            <button @click="editing=false"
-                                                class="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm">Cancel</button>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Modal -->
-                                <div x-show="modalOpen"
-                                    class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" x-cloak>
-                                    <div class="bg-gray-900 text-white p-6 rounded-lg w-11/12 max-w-lg relative">
-                                        <h3 class="text-lg font-semibold mb-2">Admin Comment</h3>
-                                        <p x-text="comment || 'No comment yet'" class="whitespace-pre-wrap"></p>
-                                        <button @click="modalOpen = false"
-                                            class="absolute top-2 right-2 px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-sm">Close</button>
-                                    </div>
-                                </div>
-                            </td>
-
-
-                            <td class="p-3">{{ $citation->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="12" class="p-4 text-center text-white/80">No group citations found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-
-            {{-- Pagination --}}
-            <div class="mt-6">
-                {{ $groupCitations->links() }}
-            </div>
-        </div>
-
-
-
-        <!-- ===================== MODALS ===================== -->
-        <!-- Department Modal -->
-        <div id="departmentModal" class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50">
-            <div
-                class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]">
-                <button onclick="closeDepartmentModal()"
-                    class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl">&times;</button>
-                <h2 class="text-xl font-semibold text-white mb-4" id="departmentModalName"></h2>
-                <p class="text-white/90 text-lg break-words" id="departmentModalCitation"></p>
-            </div>
-        </div>
-
-        <!-- Group Modal -->
-        <div id="groupModal" class="fixed inset-0 hidden items-center justify-center z-50 bg-black/50">
-            <div
-                class="bg-white/10 backdrop-blur-md rounded-xl shadow-lg max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh]">
-                <button onclick="closeGroupModal()"
-                    class="absolute top-3 right-3 text-white hover:text-red-400 font-bold text-2xl">&times;</button>
-                <h2 class="text-xl font-semibold text-white mb-4" id="groupModalName"></h2>
-                <p class="text-white/90 text-lg break-words" id="groupModalCitation"></p>
-            </div>
-        </div>
-
-        <!-- ===================== SCRIPTS ===================== -->
-        <script>
-            // ------------------ Department Modal ------------------
-            function openDepartmentModal(name, citation) {
-                document.getElementById('departmentModalName').innerText = name;
-                document.getElementById('departmentModalCitation').innerText = citation;
-                document.getElementById('departmentModal').classList.remove('hidden');
-                document.getElementById('departmentModal').classList.add('flex');
-            }
-
-            function closeDepartmentModal() {
-                document.getElementById('departmentModal').classList.add('hidden');
-                document.getElementById('departmentModal').classList.remove('flex');
-            }
-
-            // ------------------ Group Modal ------------------
-            function openGroupModal(name, citation) {
-                document.getElementById('groupModalName').innerText = name;
-                document.getElementById('groupModalCitation').innerText = citation;
-                document.getElementById('groupModal').classList.remove('hidden');
-                document.getElementById('groupModal').classList.add('flex');
-            }
-
-            function closeGroupModal() {
-                document.getElementById('groupModal').classList.add('hidden');
-                document.getElementById('groupModal').classList.remove('flex');
-            }
-
-            // ------------------ Live Search ------------------
-            document.getElementById('departmentSearch').addEventListener('keyup', function() {
-                const filter = this.value.toLowerCase();
-                document.querySelectorAll('#departmentTable tbody tr').forEach(row => {
-                    row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
-                });
-            });
-
-            document.getElementById('groupSearch').addEventListener('keyup', function() {
-                const filter = this.value.toLowerCase();
-                document.querySelectorAll('#groupTable tbody tr').forEach(row => {
-                    row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
-                });
-            });
-        </script>
-
-        @push('scripts')
-            <script>
-                async function updateDashboardCounts() {
-                    try {
-                        const response = await fetch("{{ route('admin.dashboard.counts') }}");
-                        const data = await response.json();
-
-                        document.getElementById('departments-count').textContent = data.departmentsCount;
-                        document.getElementById('groups-count').textContent = data.groupsCount;
-                        document.getElementById('citations-count').textContent = data.citationsCount;
-                    } catch (error) {
-                        console.error('Error fetching dashboard counts:', error);
-                    }
+        function dashboard() {
+            return {
+                tab: 'dept', q: '', deptModal: {{ $errors->has('name') || $errors->has('type') ? 'true' : 'false' }},
+                reader: { open: false, name: '', body: '' },
+                open(name, body) { this.reader = { open: true, name, body }; },
+                match(row) { return !this.q || row.innerText.toLowerCase().includes(this.q.toLowerCase()); },
+                initCharts() {
+                    Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+                    Chart.defaults.color = '#64748b';
+                    const grid = { color: '#eef1f5' };
+                    new Chart(document.getElementById('trendChart'), {
+                        type: 'line',
+                        data: { labels: chartData.trend.labels, datasets: [{ data: chartData.trend.values, borderColor: '#0F766E', backgroundColor: 'rgba(15,118,110,.10)', fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2.5 }] },
+                        options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } }, y: { beginAtZero: true, grid, ticks: { precision: 0 } } } }
+                    });
+                    new Chart(document.getElementById('statusChart'), {
+                        type: 'doughnut',
+                        data: { labels: ['Approved', 'Pending'], datasets: [{ data: [chartData.approved, chartData.pending], backgroundColor: ['#0F766E', '#B8893B'], borderWidth: 0 }] },
+                        options: { cutout: '74%', plugins: { legend: { display: false } } }
+                    });
+                    new Chart(document.getElementById('deptChart'), {
+                        type: 'bar',
+                        data: { labels: chartData.depts.labels, datasets: [{ data: chartData.depts.values, backgroundColor: '#14213D', borderRadius: 6, maxBarThickness: 28 }] },
+                        options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+                    });
                 }
-
-                // Initial load
-                updateDashboardCounts();
-
-                // Refresh every 10 seconds
-                setInterval(updateDashboardCounts, 10000);
-            </script>
-        @endpush
-
-
-        <script>
-            const searchInput = document.getElementById('groupSearch');
-            const table = document.getElementById('groupTable').getElementsByTagName('tbody')[0];
-
-            searchInput.addEventListener('keyup', function() {
-                const filter = searchInput.value.toLowerCase();
-                const rows = table.getElementsByTagName('tr');
-
-                Array.from(rows).forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(filter) ? '' : 'none';
-                });
-            });
-        </script>
-
-
-
+            };
+        }
+    </script>
 </body>
-
 </html>
