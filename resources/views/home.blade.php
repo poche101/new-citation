@@ -1,133 +1,137 @@
-@extends('layouts.app')
+@extends('layouts.public')
 
-@section('title', 'CELZ5 Citation')
+@section('title', 'Annual reports and citations')
 
 @section('content')
+    @php
+        $types = collect(\App\Models\Report::types());
+        $reports = $types->where('kind', 'report');
+        $citations = $types->where('kind', 'citation');
+        $limit = config('citation.max_words.citation');
+    @endphp
 
-    <!-- Hero Section -->
-    <section
-        class="relative flex flex-col md:flex-row-reverse w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 overflow-hidden py-20 px-6 md:px-12 lg:px-24 items-center justify-center min-h-[60vh] text-white">
-        <div class="md:w-1/2 flex justify-center items-center relative animate-float">
-            <img src="{{ asset('images/hero.png') }}" alt="hero-img"
-                class="w-80 md:w-96 lg:w-[450px] transform transition-transform duration-700 hover:scale-105">
+    {{-- Hero --}}
+    <section class="relative overflow-hidden bg-royal-900 text-white"
+        style="background-image:
+            radial-gradient(60rem 38rem at 88% 8%, rgba(37,87,199,.60), transparent 62%),
+            radial-gradient(38rem 26rem at -4% 104%, rgba(229,169,19,.16), transparent 62%);">
+
+        <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
+            <a href="{{ route('home') }}" class="rounded-lg bg-white px-3 py-1.5" aria-label="Christ Embassy Lagos Zone 5, home">
+                <img src="{{ asset('images/logo2.png') }}" alt="Christ Embassy Lagos Zone 5" class="h-9 w-auto">
+            </a>
+            <nav class="hidden gap-1 text-sm font-medium sm:flex" aria-label="Page sections">
+                <a href="#what" class="rounded-lg px-3 py-2 text-royal-100 hover:bg-white/10">What you can submit</a>
+                <a href="#how" class="rounded-lg px-3 py-2 text-royal-100 hover:bg-white/10">How it works</a>
+            </nav>
         </div>
-        <div class="relative z-10 md:w-1/2 overflow-hidden">
-            <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-6">
-                CELZ5 <span class="text-yellow-300">Citation</span>
-            </h1>
-            <p class="text-xl md:text-2xl mb-4">
-                Celz5 Citation is your comprehensive platform for tracking, submitting, and managing individual, departmental and group citations with ease and efficiency.
-            </p>
-            <p class="text-xl md:text-2xl mb-4">
-                Built to enhance productivity and foster collaboration, CELZ5 Citations ensures your contributions are recognized and properly documented.
-            </p>
+
+        <div class="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-10 lg:grid-cols-12 lg:pb-28 lg:pt-16">
+            <div class="lg:col-span-6">
+                <h1 class="font-display text-5xl font-medium leading-[1.03] tracking-tight sm:text-6xl lg:text-7xl">
+                    Tell the story of your year.
+                </h1>
+                <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-royal-100">
+                    Submit an annual report or a citation, for yourself or for your unit or department.
+                    You can attach documents, spreadsheets, audio or video.
+                </p>
+                <div class="mt-9">
+                    <a href="{{ route('reports.choose') }}"
+                        class="inline-flex items-center justify-center rounded-full bg-gold-500 px-8 py-4 text-base font-semibold text-royal-950 shadow-lg shadow-black/20 transition hover:bg-gold-400">
+                        Submit a report
+                    </a>
+                </div>
+            </div>
+
+            {{-- A citation sheet: the thing people are about to write --}}
+            <div class="lg:col-span-6">
+                <figure class="settle mx-auto max-w-md rounded-sm bg-white p-3 text-ink shadow-2xl shadow-black/40"
+                    aria-label="Layout of a citation">
+                    <div class="border border-gold-500 p-1.5">
+                        <div class="border border-gold-300 px-8 pb-7 pt-8 text-center">
+                            <img src="{{ asset('images/logo2.png') }}" alt="" class="mx-auto h-14 w-auto">
+                            <p class="mt-6 font-display text-4xl font-medium text-royal-900">Citation</p>
+                            <p class="mt-1 text-sm text-slate-500">For the year {{ now()->year }}</p>
+
+                            <div class="mx-auto mt-6 max-w-xs border-b border-royal-200 pb-2">
+                                <p class="font-display text-xl italic text-slate-400">Name of the person, unit or department</p>
+                            </div>
+
+                            <p class="mt-6 font-display text-lg leading-relaxed text-slate-700">
+                                Write up to {{ $limit }} words on the work, faithfulness and results that deserve to be recognised.
+                            </p>
+
+                            <div class="mx-auto mt-7 max-w-[12rem]">
+                                <div class="h-1 rounded-full bg-royal-100">
+                                    <div class="h-1 w-1/3 rounded-full bg-gold-500"></div>
+                                </div>
+                                <p class="mt-1.5 text-right text-xs text-slate-500">{{ intdiv($limit, 3) }} / {{ $limit }} words</p>
+                            </div>
+                        </div>
+                    </div>
+                </figure>
+            </div>
         </div>
     </section>
 
-    <!-- Departments Section -->
-    <section class="w-full py-16 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-    <div class="w-full px-6">
-        <div class="glass p-8 rounded-2xl shadow-2xl backdrop-blur-xl">
-            <h2 class="text-2xl md:text-3xl text-white font-semibold mb-8 text-center flex items-center justify-center space-x-3">
-                <i data-feather="layers" class="w-6 h-6 text-white"></i>
-                <span>Departments</span>
-            </h2>
+    {{-- What you can submit --}}
+    <section id="what" class="bg-white">
+        <div class="mx-auto grid max-w-6xl gap-12 px-5 py-20 lg:grid-cols-12 lg:py-24">
+            <div class="lg:col-span-4">
+                <h2 class="font-display text-4xl font-medium tracking-tight text-royal-900">What you can submit</h2>
+                <p class="mt-4 max-w-sm text-lg leading-relaxed text-slate-600">
+                    Choose the one that fits. You can submit more than one, each in its own form.
+                </p>
+            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                @foreach ($departments as $department)
-                    <div class="p-4 rounded-xl shadow-md flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer bg-white/10 backdrop-blur-md border border-white/20"
-                         onclick="selectDepartment('{{ $department['name'] }}')">
-                        <i data-feather="users" class="w-10 h-10 text-white mb-3"></i>
-                        <h3 class="text-white font-semibold text-base md:text-lg">{{ $department['name'] }}</h3>
-                        <p class="text-white/70 text-xs md:text-sm mt-1">{{ $department['description'] }}</p>
+            <div class="space-y-14 lg:col-span-8">
+                @foreach ([['Annual reports', $reports], ['Citations', $citations]] as [$heading, $items])
+                    <div>
+                        <h3 class="font-display text-2xl font-medium text-royal-800">{{ $heading }}</h3>
+                        <ul class="mt-5 space-y-7">
+                            @foreach ($items as $item)
+                                <li class="border-l-2 border-gold-500 pl-5">
+                                    <p class="text-lg font-semibold text-royal-900">{{ $item['label'] }}</p>
+                                    <p class="mt-1 max-w-xl leading-relaxed text-slate-600">{{ $item['description'] }}</p>
+                                    <p class="mt-2 text-sm font-medium text-royal-700">{{ implode(' and ', $item['includes']) }}</p>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endforeach
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-    <!-- Groups Section -->
-  <section class="w-full py-16 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-    <div class="w-full px-6">
-        <div class="glass p-12 rounded-3xl shadow-2xl backdrop-blur-xl">
-            <h2 class="text-3xl text-white font-semibold mb-12 text-center flex items-center justify-center space-x-3">
-                <i data-feather="users" class="w-7 h-7 text-white"></i>
-                <span>Groups</span>
-            </h2>
+    {{-- How it works --}}
+    <section id="how" class="bg-paper">
+        <div class="mx-auto max-w-6xl px-5 py-20 lg:py-24">
+            <h2 class="font-display text-4xl font-medium tracking-tight text-royal-900">How it works</h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                @foreach ($groups as $group)
-                    <div class="p-6 rounded-2xl shadow-lg flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer bg-white/10 backdrop-blur-md border border-white/20"
-                        onclick="selectGroup('{{ $group }}')">
-                        <i data-feather="users" class="w-12 h-12 text-white mb-4"></i>
-                        <h3 class="text-white font-semibold text-lg">{{ $group }}</h3>
-                        <p class="text-white/70 text-sm mt-1">Click to submit your citation</p>
-                    </div>
+            <ol class="mt-12 grid gap-10 md:grid-cols-3">
+                @foreach ([
+                    ['Choose a report', 'Pick one of the four: a personal or unit annual report, or a personal or unit citation.'],
+                    ['Select your department or group', 'This sends your submission to the right place.'],
+                    ['Write and attach', 'Enter your details and the dates, write your report or citation, and attach files if you have them.'],
+                ] as $i => [$title, $text])
+                    <li>
+                        <p class="font-display text-6xl font-medium text-gold-500" aria-hidden="true">{{ $i + 1 }}</p>
+                        <p class="mt-3 text-xl font-semibold text-royal-900">{{ $title }}</p>
+                        <p class="mt-2 max-w-xs leading-relaxed text-slate-600">{{ $text }}</p>
+                    </li>
                 @endforeach
-            </div>
+            </ol>
         </div>
-    </div>
-</section>
+    </section>
 
-
-
+    {{-- Closing call to action --}}
+    <section class="bg-royal-800 text-white">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-5 py-14">
+            <h2 class="font-display text-3xl font-medium tracking-tight sm:text-4xl">Ready to submit your report?</h2>
+            <a href="{{ route('reports.choose') }}"
+                class="inline-flex items-center justify-center rounded-full bg-gold-500 px-8 py-4 text-base font-semibold text-royal-950 transition hover:bg-gold-400">
+                Submit a report
+            </a>
+        </div>
+    </section>
 @endsection
-
-@push('scripts')
-    <script>
-        // Navigate to department or group form
-        function goToForm(name, type) {
-            const url = type === 'department' ?
-                `{{ url('/dept-form') }}?department=${encodeURIComponent(name)}` :
-                `{{ url('/group-form') }}?group=${encodeURIComponent(name)}`;
-            window.location.href = url;
-        }
-
-        // Initialize Feather icons
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof feather !== 'undefined') feather.replace();
-        });
-    </script>
-
-
-    {{-- DEPARTMENT BREADCRUMB --}}
-    <script>
-        function selectDepartment(departmentName) {
-            // Store in localStorage
-            localStorage.setItem('selectedDepartment', departmentName);
-
-            // Redirect to the department form page
-            window.location.href = '/department-form';
-        }
-
-        // On the department form page, prefill the breadcrumb and input
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedDept = localStorage.getItem('selectedDepartment');
-            if (savedDept) {
-                // Update breadcrumb
-                const breadcrumbSpan = document.getElementById('selectedDepartmentName');
-                if (breadcrumbSpan) breadcrumbSpan.textContent = savedDept;
-
-                // Update input field
-                const deptInput = document.getElementById('departmentInput');
-                if (deptInput) deptInput.value = savedDept;
-            }
-        });
-    </script>
-
-    @push('scripts')
-<script>
-    feather.replace();
-
-   function selectGroup(groupName) {
-    // Store selected group in localStorage
-    localStorage.setItem('selectedGroup', groupName);
-
-    // Redirect to the group-citations form page
-    window.location.href = "{{ route('group-form.create') }}";
-}
-
-</script>
-@endpush
-@endpush

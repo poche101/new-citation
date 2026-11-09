@@ -6,12 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Departments &amp; Groups - CELZ5 Citation</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo2.png') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: {
-            fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
-            colors: { ink: '#14213D', paper: '#F4F6F9', teal: { DEFAULT: '#0F766E', soft: '#E3F2F0' }, gold: { DEFAULT: '#B8893B', soft: '#F7EEDC' } }
+            fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] },
+            colors: { ink: '#0B1633', paper: '#F5F7FB', teal: { DEFAULT: '#143A94', soft: '#E3EBFA' }, gold: { DEFAULT: '#E5A913', soft: '#FBF1CF', dark: '#8A6200' } }
         } } }
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
@@ -67,7 +67,7 @@
                         <thead class="bg-paper text-xs font-semibold text-slate-500">
                             <tr>
                                 <th class="px-4 py-3">Name</th>
-                                <th class="px-4 py-3">Citations</th>
+                                <th class="px-4 py-3">Reports</th>
                                 <th class="px-4 py-3">Added</th>
                                 <th class="px-4 py-3 text-right">Actions</th>
                             </tr>
@@ -145,7 +145,7 @@
             <input type="hidden" name="edit_id" :value="editing.id">
 
             <h3 class="text-lg font-bold" x-text="editing.type === 'group' ? 'Edit group' : 'Edit department'"></h3>
-            <p class="mt-1 text-sm text-slate-500">Existing citations are updated to the new name automatically.</p>
+            <p class="mt-1 text-sm text-slate-500">Existing reports are updated to the new name automatically.</p>
 
             <label for="edit-name" class="mt-5 block text-sm font-semibold">Name</label>
             <input id="edit-name" name="name" x-model="editing.name" required maxlength="120" x-ref="editName"
@@ -175,7 +175,7 @@
             </p>
             <p class="mt-2 text-sm text-slate-500" x-show="removing.count > 0">
                 <span x-text="removing.count"></span>
-                existing citation(s) keep this name and stay visible on the dashboard.
+                existing report(s) keep this name and stay visible under Reports.
             </p>
 
             <div class="mt-6 flex justify-end gap-2 text-sm font-semibold">

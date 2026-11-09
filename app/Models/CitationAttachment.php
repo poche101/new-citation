@@ -38,6 +38,15 @@ class CitationAttachment extends Model
     }
 
     /**
+     * Remove only the database row (the file stays on disk). Used while editing,
+     * so the file is deleted only after the whole edit has been saved.
+     */
+    public function deleteRecordOnly(): void
+    {
+        static::whereKey($this->getKey())->delete();
+    }
+
+    /**
      * Save an uploaded file to the private disk and record it for $owner.
      */
     public static function storeFor(Model $owner, UploadedFile $file): self

@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
-use App\Models\DepartmentCitation;
-use App\Models\GroupCitation;
+use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -12,22 +11,17 @@ use Illuminate\Validation\Rule;
 class AdminDepartmentController extends Controller
 {
     /**
-     * List all departments and groups with their citation counts
+     * List all departments and groups with how many reports each has received
      */
     public function index()
     {
-        $deptCounts = DepartmentCitation::selectRaw('department, COUNT(*) as n')
-            ->groupBy('department')
-            ->pluck('n', 'department');
+        $counts = Report::selectRaw('entity_type, entity_name, COUNT(*) as n')
+            ->groupBy('entity_type', 'entity_name')
+            ->get()
+            ->mapWithKeys(fn ($row) => [$row->entity_type . '|' . $row->entity_name => $row->n]);
 
-        $groupCounts = GroupCitation::selectRaw('group_name, COUNT(*) as n')
-            ->groupBy('group_name')
-            ->pluck('n', 'group_name');
-
-        $items = Department::orderBy('name')->get()->map(function ($item) use ($deptCounts, $groupCounts) {
-            $item->citations_count = $item->type === 'group'
-                ? ($groupCounts[$item->name] ?? 0)
-                : ($deptCounts[$item->name] ?? 0);
+        $items = Department::orderBy('name')->get()->map(function ($item) use ($counts) {
+            $item->citations_count = $counts[$item->type . '|' . $item->name] ?? 0;
 
             return $item;
         });
@@ -64,7 +58,7 @@ class AdminDepartmentController extends Controller
     }
 
     /**
-     * Rename a department or group (existing citations follow the new name)
+     * Rename a department or group (existing reports follow the new name)
      */
     public function update(Request $request, Department $department)
     {
@@ -86,11 +80,9 @@ class AdminDepartmentController extends Controller
             $department->update(['name' => $newName]);
 
             if ($oldName !== $newName) {
-                if ($department->type === 'group') {
-                    GroupCitation::where('group_name', $oldName)->update(['group_name' => $newName]);
-                } else {
-                    DepartmentCitation::where('department', $oldName)->update(['department' => $newName]);
-                }
+                Report::where('entity_type', $department->type)
+                    ->where('entity_name', $oldName)
+                    ->update(['entity_name' => $newName]);
             }
         });
 
@@ -100,7 +92,7 @@ class AdminDepartmentController extends Controller
     }
 
     /**
-     * Delete a department or group (past citations are kept)
+     * Delete a department or group (past reports are kept)
      */
     public function destroy(Department $department)
     {

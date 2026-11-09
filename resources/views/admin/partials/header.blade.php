@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-4">
             <div class="hidden items-center gap-2 sm:flex">
-                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-xs font-bold">{{ $initials }}</span>
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-xs font-bold text-ink">{{ $initials }}</span>
                 <span class="text-sm text-white/80">{{ $fullName }}</span>
             </div>
             <form method="POST" action="{{ route('admin.logout') }}">
@@ -34,6 +34,14 @@
                    'border-transparent text-white/60 hover:text-white' => ! request()->routeIs('admin.dashboard'),
                ])>
                 Dashboard
+            </a>
+            <a href="{{ route('admin.reports.index') }}"
+               @class([
+                   'whitespace-nowrap border-b-2 px-3 py-3 transition',
+                   'border-gold text-white' => request()->routeIs('admin.reports.*'),
+                   'border-transparent text-white/60 hover:text-white' => ! request()->routeIs('admin.reports.*'),
+               ])>
+                Reports
             </a>
             <a href="{{ route('admin.departments.index') }}"
                @class([
