@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesCitationSubmission;
 use App\Models\Group;
 use App\Models\GroupCitation;
 use Illuminate\Http\Request;
@@ -9,6 +10,8 @@ use Carbon\Carbon;
 
 class GroupCitationController extends Controller
 {
+    use HandlesCitationSubmission;
+
     /**
      * Show the multi-step form
      */
@@ -23,25 +26,22 @@ class GroupCitationController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'title'       => 'nullable|string|max:255',
-            'name'        => 'required|string|max:255',
-            'unit'        => 'required|string|max:255',
-            'designation' => 'required|string|max:255',
-            'kingschat'   => 'nullable|string|max:255',
-            'phone'       => 'required|string|max:20',
-            'group_name'  => 'required|string|max:255',
-            'period'      => 'nullable|string',
-            'description' => [
-                'required',
-                'string',
-                function ($attr, $value, $fail) {
-                    if (str_word_count($value) > 150) {
-                        $fail('Citation must not exceed 150 words.');
-                    }
-                },
-            ],
-        ]);
+        $data = $request->validate(
+            [
+                'title'       => 'nullable|string|max:255',
+                'name'        => 'required|string|max:255',
+                'unit'        => 'required|string|max:255',
+                'designation' => 'required|string|max:255',
+                'kingschat'   => 'nullable|string|max:255',
+                'phone'       => 'required|string|max:20',
+                'group_name'  => 'required|string|max:255',
+                'period'      => 'nullable|string',
+                // Personal citation (max 150 words)
+                'description' => $this->citationRules(),
+            ] + $this->submissionRules(),
+            $this->submissionMessages(),
+            $this->submissionAttributes() + ['description' => 'personal citation']
+        );
 
         $periodFrom = null;
         $periodTo   = null;
@@ -56,18 +56,24 @@ class GroupCitationController extends Controller
             }
         }
 
-        GroupCitation::create([
-            'title'       => $request->title,
-            'name'        => $request->name,
-            'unit'        => $request->unit,
-            'designation' => $request->designation,
-            'kingschat'   => $request->kingschat,
-            'phone'       => $request->phone,
-            'group_name'  => $request->group_name,
+        $this->createWithAttachments(GroupCitation::class, [
+            'title'       => $data['title'] ?? null,
+            'name'        => $data['name'],
+            'unit'        => $data['unit'],
+            'designation' => $data['designation'],
+            'kingschat'   => $data['kingschat'] ?? null,
+            'phone'       => $data['phone'],
+            'group_name'  => $data['group_name'],
             'period_from' => $periodFrom,
             'period_to'   => $periodTo,
-            'description' => $request->description,
-        ]);
+            'description' => $data['description'],
+
+            'unit_citation'           => $data['unit_citation'],
+            'personal_report_summary' => $data['personal_report_summary'],
+            'personal_report_detail'  => $data['personal_report_detail'],
+            'unit_report_summary'     => $data['unit_report_summary'],
+            'unit_report_detail'      => $data['unit_report_detail'],
+        ], $request);
 
         return redirect()->route('group-citations.create')->with('success', 'Citation submitted successfully.');
     }

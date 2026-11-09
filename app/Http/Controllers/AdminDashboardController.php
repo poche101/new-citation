@@ -16,8 +16,8 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
-        $departmentCitations = DepartmentCitation::latest()->paginate(10, ['*'], 'departments_page');
-        $groupCitations      = GroupCitation::latest()->paginate(10, ['*'], 'groups_page');
+        $departmentCitations = DepartmentCitation::with('attachments')->latest()->paginate(10, ['*'], 'departments_page');
+        $groupCitations      = GroupCitation::with('attachments')->latest()->paginate(10, ['*'], 'groups_page');
 
         // Cards (now based on the category chosen when the entry was created)
         $departmentsCount = Department::where('type', 'department')->count();

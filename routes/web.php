@@ -11,6 +11,7 @@ use App\Http\Controllers\DepartmentCitationController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\GroupCitationController;
 use App\Http\Controllers\GroupExportController;
+use App\Http\Controllers\CitationAttachmentController;
 
 // -------------------------
 // Public Routes
@@ -97,5 +98,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             ->name('departmentCitation.comment');
         Route::post('group-citation/{id}/comment', [GroupCitationController::class, 'storeComment'])
             ->name('groupCitation.comment');
+
+        // Download a file uploaded with a submission (private storage)
+        Route::get('attachments/{attachment}', [CitationAttachmentController::class, 'download'])
+            ->name('attachments.download');
     });
 });

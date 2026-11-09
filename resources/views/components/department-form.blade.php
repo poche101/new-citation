@@ -57,12 +57,21 @@
                 </div>
             @endif
 
+            <!-- Progress -->
+            <div class="mb-8 text-white">
+                <p id="stepProgressLabel" class="mb-2 text-sm text-white/80">Step 1 of 5</p>
+                <div class="h-1.5 w-full rounded bg-white/20">
+                    <div id="stepProgressBar" class="h-full rounded bg-white transition-all" style="width: 20%"></div>
+                </div>
+            </div>
+
             <form id="multiStepForm" class="space-y-6 text-white" method="POST"
-                action="{{ route('department-form.store') }}">
+                action="{{ route('department-form.store') }}" enctype="multipart/form-data">
                 @csrf
 
                 <!-- Step 1: Personal Info -->
-                <div class="form-step space-y-6">
+                <div class="form-step space-y-6"
+                    data-has-error="{{ $errors->hasAny(['title', 'fullname', 'unit', 'designation', 'kingschat', 'phone']) ? 1 : 0 }}">
                     <h2 class="text-xl font-semibold mb-4 flex items-center space-x-2">
                         <i data-feather="user" class="w-6 h-6 text-white"></i>
                         <span>Step 1: Personal Information</span>
@@ -89,7 +98,8 @@
                 </div>
 
                 <!-- Step 2: Department -->
-                <div class="form-step hidden space-y-10 w-full">
+                <div class="form-step hidden space-y-10 w-full"
+                    data-has-error="{{ $errors->has('department') ? 1 : 0 }}">
                     <h2 class="text-2xl font-semibold mb-6 flex items-center space-x-3">
                         <i data-feather="layers" class="w-7 h-7 text-white"></i>
                         <span>Step 2: Department</span>
@@ -104,9 +114,16 @@
                             <i data-feather="briefcase" class="w-6 h-6 text-gray-600"></i>
 
                             <input id="departmentInput" type="text" name="department" readonly required
+                                value="{{ old('department') }}"
+                                data-missing-message="Please choose a department first."
                                 placeholder="Select Department"
                                 class="w-full text-lg border-none focus:ring-0 focus:outline-none text-gray-900 bg-transparent">
                         </div>
+
+                        <p class="mt-2 text-sm text-white/80">
+                            Wrong department?
+                            <a href="{{ route('departments.index') }}" class="underline hover:text-white">Choose a different one</a>
+                        </p>
                     </div>
 
                     <div class="flex justify-between mt-8">
@@ -124,205 +141,40 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Citation -->
-                <div class="form-step hidden space-y-6">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center space-x-2">
-                        <i data-feather="file-text" class="w-6 h-6 text-white"></i>
-                        <span>Step 3: Submit Citation</span>
-                    </h2>
-
-                    <x-form.datepicker name="period" label="Period" placeholder="Select period (From – To)" />
-
-                    <div>
-                        <label class="mb-1">Citation (max 150 words)</label>
-                        <textarea id="citation" name="citation" rows="6" class="w-full p-3 rounded-lg text-black"
-                            placeholder="Enter your citation (max: 150 words)" required></textarea>
-                        <p id="citationError" class="text-red-600 text-sm mt-1 hidden"></p>
-                        <p id="citationCount" class="text-gray-600 text-sm mt-1">0 / 150 words</p>
-                    </div>
-
-                    <div class="flex justify-between mt-4">
-                        <button type="button"
-                            class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50"
-                            onclick="prevStep()">Previous</button>
-                        <button type="submit"
-                            class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50">Submit</button>
-                    </div>
-                </div>
+                <!-- Steps 3-5: personal submission, unit/department submission, uploads -->
+                @include('partials.citation-submission-steps', [
+                    'unitLabel' => 'Unit / Department',
+                    'personalCitationField' => 'citation',
+                ])
 
             </form>
         </div>
-    @endsection
+    </div>
+@endsection
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-        <script>
-            feather.replace();
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-            // Multi-step form logic
-            const steps = document.querySelectorAll('.form-step');
-            let currentStep = 0;
+    @include('partials.citation-form-scripts')
 
-            function showStep(index) {
-                steps.forEach((step, i) => step.classList.toggle('hidden', i !== index));
+    <script>
+        // Pre-fill the department chosen on the Departments page (or passed in the URL)
+        (function () {
+            const input = document.getElementById('departmentInput');
+            const crumb = document.getElementById('selectedDepartmentName');
+
+            let department = input.value.trim(); // kept by the server after a failed submit
+            if (!department) {
+                department = new URLSearchParams(window.location.search).get('department') || '';
+            }
+            if (!department) {
+                try { department = localStorage.getItem('selectedDepartment') || ''; } catch (e) {}
             }
 
-            function nextStep() {
-                const inputs = steps[currentStep].querySelectorAll('input, textarea, select');
-                for (let input of inputs) {
-                    if (!input.checkValidity()) {
-                        input.reportValidity();
-                        return;
-                    }
-                }
-                if (currentStep < steps.length - 1) currentStep++;
-                showStep(currentStep);
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
+            if (department) {
+                input.value = department;
+                crumb.textContent = department;
             }
-
-            function prevStep() {
-                if (currentStep > 0) currentStep--;
-                showStep(currentStep);
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            }
-
-            showStep(currentStep);
-
-            // Prefill department from URL or localStorage
-            document.addEventListener("DOMContentLoaded", () => {
-                const department = new URLSearchParams(window.location.search).get("department") || localStorage
-                    .getItem("selectedDepartment");
-                if (department) {
-                    const deptInput = document.getElementById("departmentInput");
-                    const breadcrumbDept = document.getElementById("selectedDepartmentName");
-                    if (deptInput) deptInput.value = department;
-                    if (breadcrumbDept) breadcrumbDept.textContent = department;
-
-                    currentStep = 1;
-                    showStep(currentStep);
-                }
-
-                flatpickr("#periodInput", {
-                    mode: "range",
-                    dateFormat: "F j, Y",
-                    allowInput: false,
-                    altInput: true,
-                    altFormat: "F j, Y",
-                });
-
-                const citationInput = document.getElementById('citation');
-                const citationCount = document.getElementById('citationCount');
-                const citationError = document.getElementById('citationError');
-                const maxWords = 150;
-
-                citationInput.addEventListener('input', () => {
-                    let words = citationInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-                    citationCount.textContent = `${words.length} / ${maxWords} words`;
-                    if (words.length > maxWords) {
-                        citationError.textContent = `You have exceeded the maximum of ${maxWords} words!`;
-                        citationError.classList.remove('hidden');
-                    } else citationError.classList.add('hidden');
-                });
-
-                document.querySelector('form').addEventListener('submit', function(e) {
-                    let words = citationInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-                    if (words.length > maxWords) {
-                        e.preventDefault();
-                        citationError.textContent = `Cannot submit. Maximum ${maxWords} words allowed.`;
-                        citationError.classList.remove('hidden');
-                    }
-                });
-            });
-        </script>
-
-        <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const steps = document.querySelectorAll('.form-step');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const submitBtn = document.getElementById('submitBtn');
-
-        let currentStep = 0;
-
-        function showStep(index) {
-            steps.forEach((step, i) => {
-                step.classList.toggle('hidden', i !== index);
-            });
-
-            prevBtn.style.display = index === 0 ? 'none' : 'inline-block';
-            nextBtn.style.display = index === steps.length - 1 ? 'none' : 'inline-block';
-            submitBtn.style.display = index === steps.length - 1 ? 'inline-block' : 'none';
-        }
-
-        // ✅ ALWAYS START FROM STEP 1
-        currentStep = 0;
-        showStep(currentStep);
-    });
-</script>
-
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Get selected department from localStorage
-    const selectedDept = localStorage.getItem('selectedDepartment');
-
-    if (selectedDept) {
-        // Update breadcrumb
-        const breadcrumbDept = document.getElementById('selectedDepartmentName');
-        if (breadcrumbDept) breadcrumbDept.textContent = selectedDept;
-
-        // Update department input field
-        const deptInput = document.getElementById('departmentInput');
-        if (deptInput) deptInput.value = selectedDept;
-
-        // Clear localStorage after use
-        localStorage.removeItem('selectedDepartment');
-
-        // Show Step 2 of the multi-step form
-        if (typeof currentStep !== 'undefined' && typeof showStep === 'function') {
-            currentStep = 1; // Step index starts at 0
-            showStep(currentStep);
-        }
-    }
-});
-
-let currentStep = 0;
-
-const steps = document.querySelectorAll('.form-step');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const submitBtn = document.getElementById('submitBtn');
-
-function showStep(index) {
-    steps.forEach((step, i) => step.classList.add('hidden'));
-    steps[index].classList.remove('hidden');
-
-    prevBtn.style.display = index === 0 ? 'none' : 'inline-block';
-    nextBtn.style.display = index === steps.length - 1 ? 'none' : 'inline-block';
-    submitBtn.style.display = index === steps.length - 1 ? 'inline-block' : 'none';
-}
-
-// Initialize first step
-showStep(currentStep);
-
-// Button navigation
-nextBtn.addEventListener('click', () => {
-    if (currentStep < steps.length - 1) currentStep++;
-    showStep(currentStep);
-});
-prevBtn.addEventListener('click', () => {
-    if (currentStep > 0) currentStep--;
-    showStep(currentStep);
-});
-
-</script>
-
-
-
-    @endpush
+        })();
+    </script>
+@endpush

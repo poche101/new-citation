@@ -5,23 +5,13 @@ namespace App\Exports;
 use App\Models\GroupCitation;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class GroupCitationsExport implements FromCollection, WithHeadings
+class GroupCitationsExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return GroupCitation::select(
-            'title',
-            'name',
-            'unit',
-            'designation',
-            'kingschat',
-            'phone',
-            'group_name',
-            'period_from',
-            'period_to',
-            'description'
-        )->get();
+        return GroupCitation::with('attachments')->get();
     }
 
     public function headings(): array
@@ -36,7 +26,36 @@ class GroupCitationsExport implements FromCollection, WithHeadings
             'Group Name',
             'Period From',
             'Period To',
-            'Citation',
+            'Personal Citation',
+            'Unit / Group Citation',
+            'Personal Report: Executive Summary',
+            'Personal Report: Detailed Report',
+            'Unit Report: Executive Summary',
+            'Unit Report: Detailed Report',
+            'Uploaded Files',
+        ];
+    }
+
+    /** @param GroupCitation $c */
+    public function map($c): array
+    {
+        return [
+            $c->title,
+            $c->name,
+            $c->unit,
+            $c->designation,
+            $c->kingschat,
+            $c->phone,
+            $c->group_name,
+            $c->period_from?->format('Y-m-d'),
+            $c->period_to?->format('Y-m-d'),
+            $c->description,
+            $c->unit_citation,
+            $c->personal_report_summary,
+            $c->personal_report_detail,
+            $c->unit_report_summary,
+            $c->unit_report_detail,
+            $c->attachments->pluck('original_name')->implode(', '),
         ];
     }
 }

@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesCitationSubmission;
 use App\Models\DepartmentCitation;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DepartmentCitationsExport;
 use PDF;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Response;
 
 class DepartmentCitationController extends Controller
 {
+    use HandlesCitationSubmission;
+
     /**
      * Show the department citation form
      */
@@ -24,25 +28,30 @@ class DepartmentCitationController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'fullname'     => 'required|string|max:255',
-            'unit'         => 'required|string|max:255',
-            'designation'  => 'required|string|max:255',
-            'kingschat'    => 'required|string|max:255',
-            'phone'        => 'required|string|max:20',
-            'department'   => 'required|string|max:255',
-            'period'       => 'nullable|string|max:255',
-            'citation'     => 'required|string',
-            'title'        => 'nullable|string|max:255',
-        ]);
+        $data = $request->validate(
+            [
+                'fullname'     => 'required|string|max:255',
+                'unit'         => 'required|string|max:255',
+                'designation'  => 'required|string|max:255',
+                'kingschat'    => 'required|string|max:255',
+                'phone'        => 'required|string|max:20',
+                'department'   => 'required|string|max:255',
+                'period'       => 'nullable|string|max:255',
+                'title'        => 'nullable|string|max:255',
+                // Personal citation (max 150 words)
+                'citation'     => $this->citationRules(),
+            ] + $this->submissionRules(),
+            $this->submissionMessages(),
+            $this->submissionAttributes()
+        );
 
-        if (str_word_count($request->citation) > 150) {
-            return back()
-                ->withInput()
-                ->withErrors(['citation' => 'Citation must not exceed 150 words.']);
-        }
-
-        DepartmentCitation::create($request->all());
+        // Only validated fields are saved (never the raw request), so a visitor
+        // cannot set fields such as "approved" or "admin_comment" themselves.
+        $this->createWithAttachments(
+            DepartmentCitation::class,
+            Arr::except($data, ['attachments']),
+            $request
+        );
 
         return redirect()
             ->route('department-form.create')
@@ -96,7 +105,7 @@ class DepartmentCitationController extends Controller
      */
     public function exportCSV()
     {
-        $citations = DepartmentCitation::all();
+        $citations = DepartmentCitation::with('attachments')->get();
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -107,7 +116,10 @@ class DepartmentCitationController extends Controller
             $file = fopen('php://output', 'w');
             fputcsv($file, [
                 'Title', 'Full Name', 'Unit', 'Department', 'Designation',
-                'Kingschat', 'Phone', 'Citation', 'Period', 'Admin Comment', 'Approved'
+                'Kingschat', 'Phone', 'Personal Citation', 'Unit / Department Citation',
+                'Personal Report Summary', 'Personal Report Detail',
+                'Unit Report Summary', 'Unit Report Detail',
+                'Period', 'Uploaded Files', 'Admin Comment', 'Approved'
             ]);
 
             foreach ($citations as $citation) {
@@ -120,7 +132,13 @@ class DepartmentCitationController extends Controller
                     $citation->kingschat,
                     $citation->phone,
                     $citation->citation,
+                    $citation->unit_citation,
+                    $citation->personal_report_summary,
+                    $citation->personal_report_detail,
+                    $citation->unit_report_summary,
+                    $citation->unit_report_detail,
                     $citation->period,
+                    $citation->attachments->pluck('original_name')->implode(', '),
                     $citation->admin_comment ?? '',
                     $citation->approved ? 'Approved' : 'Pending',
                 ]);

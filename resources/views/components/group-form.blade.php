@@ -56,12 +56,22 @@
                     </ul>
                 </div>
             @endif
+
+            <!-- Progress -->
+            <div class="mb-8 text-white">
+                <p id="stepProgressLabel" class="mb-2 text-sm text-white/80">Step 1 of 5</p>
+                <div class="h-1.5 w-full rounded bg-white/20">
+                    <div id="stepProgressBar" class="h-full rounded bg-white transition-all" style="width: 20%"></div>
+                </div>
+            </div>
+
             <form id="multiStepForm" class="space-y-6 text-white" method="POST"
-                action="{{ route('group-citations.store') }}">
+                action="{{ route('group-citations.store') }}" enctype="multipart/form-data">
                 @csrf
 
                 <!-- Step 1: Personal Info -->
-                <div class="form-step space-y-6">
+                <div class="form-step space-y-6"
+                    data-has-error="{{ $errors->hasAny(['title', 'name', 'unit', 'designation', 'kingschat', 'phone']) ? 1 : 0 }}">
                     <h2 class="text-xl font-semibold mb-4 flex items-center space-x-2">
                         <i data-feather="user" class="w-6 h-6 text-white"></i>
                         <span>Step 1: Personal Information</span>
@@ -69,7 +79,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <x-form.input name="title" label="Title" placeholder="Bro, Sis, Pastor..." icon="user" />
-                       <x-form.input name="name" label="Full Name" placeholder="John Doe" icon="edit" required />
+                        <x-form.input name="name" label="Full Name" placeholder="John Doe" icon="edit" required />
                         <x-form.input name="unit" label="Unit" placeholder="Enter Unit" icon="map-pin" required />
                         <x-form.input name="designation" label="Designation" placeholder="e.g. Leader" icon="briefcase"
                             required />
@@ -87,9 +97,9 @@
                     </div>
                 </div>
 
-                <!-- Step 2: Group Selection -->
                 <!-- Step 2: Group -->
-                <div class="form-step hidden space-y-6">
+                <div class="form-step hidden space-y-6"
+                    data-has-error="{{ $errors->has('group_name') ? 1 : 0 }}">
                     <h2 class="text-xl font-semibold mb-4 flex items-center space-x-2">
                         <i data-feather="users" class="w-6 h-6 text-white"></i>
                         <span>Step 2: Group</span>
@@ -104,260 +114,60 @@
                             <i data-feather="briefcase" class="w-6 h-6 text-gray-600"></i>
 
                             <input id="groupInput" type="text" name="group_name" readonly required
+                                value="{{ old('group_name') }}"
+                                data-missing-message="Please choose a group first."
                                 placeholder="Select Group"
                                 class="w-full text-lg border-none focus:ring-0 focus:outline-none text-gray-900 bg-transparent">
                         </div>
 
+                        <p class="mt-2 text-sm text-white/80">
+                            Wrong group?
+                            <a href="{{ url('/groups') }}" class="underline hover:text-white">Choose a different one</a>
+                        </p>
                     </div>
 
                     <div class="flex justify-between mt-6">
-                        <button type="button" class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold"
+                        <button type="button"
+                            class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50"
                             onclick="prevStep()">Previous</button>
 
-                        <button type="button" class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold"
+                        <button type="button"
+                            class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50"
                             onclick="nextStep()">Next</button>
                     </div>
                 </div>
 
-                <!-- Step 3: Citation -->
-                <div class="form-step hidden space-y-6">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center space-x-2">
-                        <i data-feather="file-text" class="w-6 h-6 text-white"></i>
-                        <span>Step 3: Submit Citation</span>
-                    </h2>
+                <!-- Steps 3-5: personal submission, unit/group submission, uploads -->
+                @include('partials.citation-submission-steps', [
+                    'unitLabel' => 'Unit / Group',
+                    'personalCitationField' => 'description',
+                ])
 
-                    <x-form.datepicker name="period" label="Period" placeholder="Select period (From – To)" />
-
-                    <div>
-                        <label class="mb-1">Citation (max 150 words)</label>
-                        <textarea id="citation" name="description" rows="6" class="w-full p-3 rounded-lg text-black"
-                            placeholder="Enter your citation (max: 150 words)" required></textarea>
-
-                        <p id="citationError" class="text-red-600 text-sm mt-1 hidden"></p>
-                        <p id="citationCount" class="text-gray-600 text-sm mt-1">0 / 150 words</p>
-                    </div>
-
-                    <div class="flex justify-between mt-4">
-                        <button type="button"
-                            class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50"
-                            onclick="prevStep()">Previous
-                        </button>
-
-                        <button type="submit"
-                            class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50">
-                            Submit
-                        </button>
-                    </div>
-                </div>
             </form>
-
-            <script>
-                function selectGroup(id, name) {
-                    document.getElementById('groupIdInput').value = id;
-                    document.getElementById('groupInput').value = name;
-                }
-            </script>
-
-
-            <script>
-                function selectGroup(id, name) {
-                    document.getElementById('groupIdInput').value = id;
-                    document.getElementById('groupNameInput').value = name;
-                    document.getElementById('groupInput').value = name;
-                }
-            </script>
-
-
-            <script>
-                function selectGroup(id, name) {
-                    document.getElementById('groupInput').value = name; // visible
-                    document.getElementById('groupIdInput').value = id; // hidden for submission
-                }
-            </script>
-
-            <script>
-                function selectGroup(id, name) {
-                    document.getElementById('groupIdInput').value = id; // Hidden input for submission
-                    document.getElementById('groupInput').value = name; // Display input for user
-                }
-            </script>
-
-
-
-
         </div>
     </div>
 @endsection
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        feather.replace();
 
-        // Multi-step form logic
-        const steps = document.querySelectorAll('.form-step');
-        let currentStep = 0;
-
-        function showStep(index) {
-            steps.forEach((step, i) => step.classList.toggle('hidden', i !== index));
-        }
-
-        function nextStep() {
-            const inputs = steps[currentStep].querySelectorAll('input, textarea, select');
-            for (let input of inputs) {
-                if (!input.checkValidity()) {
-                    input.reportValidity();
-                    return;
-                }
-            }
-            if (currentStep < steps.length - 1) currentStep++;
-            showStep(currentStep);
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
-
-        function prevStep() {
-            if (currentStep > 0) currentStep--;
-            showStep(currentStep);
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
-
-        showStep(currentStep);
-
-        // Prefill group from localStorage
-        document.addEventListener("DOMContentLoaded", () => {
-            const selectedGroup = localStorage.getItem("selectedGroup");
-            if (selectedGroup) {
-                const groupInput = document.getElementById("groupInput");
-                const groupNameSpan = document.getElementById("selectedGroupName");
-                const groupIdInput = document.getElementById("groupIdInput");
-
-                if (groupInput) groupInput.value = selectedGroup;
-                if (groupNameSpan) groupNameSpan.textContent = selectedGroup;
-                if (groupIdInput) groupIdInput.value = localStorage.getItem("selectedGroupId");
-
-                // Show Step 2 directly
-                currentStep = 1;
-                showStep(currentStep);
-            }
-        });
-
-        // Citation word count validation
-        const citationInput = document.getElementById('citation');
-        const citationCount = document.getElementById('citationCount');
-        const citationError = document.getElementById('citationError');
-        const maxWords = 150;
-
-        citationInput?.addEventListener('input', () => {
-            let words = citationInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-            citationCount.textContent = `${words.length} / ${maxWords} words`;
-            if (words.length > maxWords) {
-                citationError.textContent = `You have exceeded the maximum of ${maxWords} words!`;
-                citationError.classList.remove('hidden');
-            } else citationError.classList.add('hidden');
-        });
-
-        document.querySelector('form')?.addEventListener('submit', function(e) {
-            let words = citationInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-            if (words.length > maxWords) {
-                e.preventDefault();
-                citationError.textContent = `Cannot submit. Maximum ${maxWords} words allowed.`;
-                citationError.classList.remove('hidden');
-            }
-        });
-    </script>
-
+    @include('partials.citation-form-scripts')
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const steps = document.querySelectorAll('.form-step');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const submitBtn = document.getElementById('submitBtn');
+        // Pre-fill the group chosen on the Groups page
+        (function () {
+            const input = document.getElementById('groupInput');
+            const crumb = document.getElementById('selectedGroupName');
 
-            let currentStep = 0; // Always start with Step 1
-
-            function showStep(index) {
-                steps.forEach((step, i) => step.classList.add('hidden'));
-                steps[index].classList.remove('hidden');
-
-                // Buttons logic
-                if (prevBtn) prevBtn.style.display = index === 0 ? 'none' : 'inline-block';
-                if (nextBtn) nextBtn.style.display = index === steps.length - 1 ? 'none' : 'inline-block';
-                if (submitBtn) submitBtn.style.display = index === steps.length - 1 ? 'inline-block' : 'none';
+            let group = input.value.trim(); // kept by the server after a failed submit
+            if (!group) {
+                try { group = localStorage.getItem('selectedGroup') || ''; } catch (e) {}
             }
 
-            // Next / Previous navigation
-            window.nextStep = () => {
-                if (currentStep < steps.length - 1) currentStep++;
-                showStep(currentStep);
-            };
-            window.prevStep = () => {
-                if (currentStep > 0) currentStep--;
-                showStep(currentStep);
-            };
-
-            // Initialize: show first step
-            showStep(currentStep);
-
-            // Optional: word count for citation
-            const citationInput = document.getElementById('citation');
-            const citationCount = document.getElementById('citationCount');
-            const citationError = document.getElementById('citationError');
-            const maxWords = 150;
-
-            if (citationInput) {
-                citationInput.addEventListener('input', () => {
-                    let words = citationInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-                    citationCount.textContent = `${words.length} / ${maxWords} words`;
-                    citationError.classList.toggle('hidden', words.length <= maxWords);
-                    if (words.length > maxWords) citationError.textContent =
-                        `Maximum ${maxWords} words exceeded!`;
-                });
-
-                // Prevent submission if too many words
-                document.querySelector('form').addEventListener('submit', (e) => {
-                    let words = citationInput.value.trim().split(/\s+/).filter(w => w.length > 0);
-                    if (words.length > maxWords) {
-                        e.preventDefault();
-                        citationError.textContent = `Cannot submit. Maximum ${maxWords} words allowed.`;
-                        citationError.classList.remove('hidden');
-                    }
-                });
+            if (group) {
+                input.value = group;
+                crumb.textContent = group;
             }
-        });
-    </script>
-
-
-    <script>
-        function selectGroup(id, name) {
-            document.getElementById('groupIdInput').value = id;
-            document.getElementById('groupInput').value = name;
-        }
-
-        function nextStep() {
-            const currentStep = document.querySelector('.form-step:not(.hidden)');
-
-            // Check if current step is group selection and group is required
-            const groupIdInput = document.getElementById('groupIdInput');
-            if (groupIdInput && groupIdInput.hasAttribute('required') && !groupIdInput.value) {
-                alert('Please select a group before continuing.');
-                return;
-            }
-
-            currentStep.classList.add('hidden');
-            currentStep.nextElementSibling.classList.remove('hidden');
-        }
-
-        function prevStep() {
-            const currentStep = document.querySelector('.form-step:not(.hidden)');
-            currentStep.classList.add('hidden');
-            currentStep.previousElementSibling.classList.remove('hidden');
-        }
+        })();
     </script>
 @endpush

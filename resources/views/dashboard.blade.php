@@ -148,6 +148,26 @@
                                     $period = $key === 'dept'
                                         ? ($c->period ?? 'N/A')
                                         : (($c->period_from?->format('d M Y') ?? 'N/A') . ' to ' . ($c->period_to?->format('d M Y') ?? 'N/A'));
+
+                                    // Everything the admin sees in the "full submission" window
+                                    $submission = [
+                                        'name'     => trim(($c->title ? $c->title . ' ' : '') . ($name ?? '')),
+                                        'meta'     => ($key === 'dept' ? $c->department : $c->group_name) . ' / ' . ($c->unit ?? 'N/A'),
+                                        'sections' => [
+                                            ['Personal citation', $body],
+                                            ['Unit / ' . ($key === 'dept' ? 'Department' : 'Group') . ' citation', $c->unit_citation],
+                                            ['Personal annual report: executive summary', $c->personal_report_summary],
+                                            ['Personal annual report: detailed report', $c->personal_report_detail],
+                                            ['Unit annual report: executive summary', $c->unit_report_summary],
+                                            ['Unit annual report: detailed report', $c->unit_report_detail],
+                                        ],
+                                        'files'    => $c->attachments->map(fn ($f) => [
+                                            'name' => $f->original_name,
+                                            'kind' => $f->kind,
+                                            'size' => $f->humanSize(),
+                                            'url'  => route('admin.attachments.download', $f),
+                                        ])->all(),
+                                    ];
                                 @endphp
                                 <tr x-show="match($el)" class="align-top hover:bg-paper/60">
                                     <td class="px-4 py-3">
@@ -162,10 +182,13 @@
                                     <td class="whitespace-nowrap px-4 py-3">{{ $period }}</td>
                                     <td class="max-w-xs px-4 py-3">
                                         <p>{{ Str::limit($body ?? 'N/A', 60) }}</p>
-                                        @if (strlen($body ?? '') > 60)
-                                            <button type="button" class="mt-1 text-xs font-semibold text-teal hover:underline"
-                                                    @click="open({{ Js::from($name) }}, {{ Js::from($body) }})">Read full citation</button>
-                                        @endif
+                                        <button type="button" class="mt-1 text-xs font-semibold text-teal hover:underline"
+                                                @click="view({{ Js::from($submission) }})">
+                                            View full submission
+                                            @if ($c->attachments->isNotEmpty())
+                                                <span class="ml-1 rounded-full bg-gold-soft px-1.5 py-0.5 text-gold">{{ $c->attachments->count() }} {{ Str::plural('file', $c->attachments->count()) }}</span>
+                                            @endif
+                                        </button>
                                     </td>
                                     <td class="px-4 py-3">
                                         <form method="POST" action="{{ route($routeBase . '.toggleApproval', $c->id) }}">
@@ -203,13 +226,39 @@
         </section>
     </main>
 
-    {{-- Citation reader --}}
+    {{-- Full submission: citations, annual reports and uploaded files --}}
     <div x-show="reader.open" x-cloak @keydown.escape.window="reader.open = false"
          class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4" @click.self="reader.open = false">
-        <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            <h3 class="text-lg font-bold" x-text="reader.name"></h3>
-            <p class="mt-3 whitespace-pre-wrap leading-relaxed text-slate-700" x-text="reader.body"></p>
-            <button @click="reader.open = false" class="mt-5 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white">Close</button>
+        <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" role="dialog" aria-modal="true">
+            <h3 class="text-xl font-bold" x-text="reader.name"></h3>
+            <p class="text-sm text-slate-500" x-text="reader.meta"></p>
+
+            <template x-for="section in reader.sections" :key="section[0]">
+                <section class="mt-6">
+                    <h4 class="text-sm font-bold uppercase tracking-wide text-teal" x-text="section[0]"></h4>
+                    <p class="mt-1 whitespace-pre-wrap leading-relaxed text-slate-700"
+                       x-text="section[1] || 'Not provided (this was submitted before this section existed).'"
+                       :class="section[1] ? '' : 'italic text-slate-400'"></p>
+                </section>
+            </template>
+
+            <section class="mt-6">
+                <h4 class="text-sm font-bold uppercase tracking-wide text-teal">Uploaded files</h4>
+                <p x-show="!reader.files.length" class="mt-1 text-sm italic text-slate-400">No files were uploaded.</p>
+                <ul class="mt-2 space-y-2">
+                    <template x-for="file in reader.files" :key="file.url">
+                        <li class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                            <span class="min-w-0">
+                                <span class="block truncate font-semibold" x-text="file.name"></span>
+                                <span class="text-xs capitalize text-slate-500" x-text="file.kind + ' · ' + file.size"></span>
+                            </span>
+                            <a :href="file.url" class="shrink-0 rounded-lg bg-teal px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal/90">Download</a>
+                        </li>
+                    </template>
+                </ul>
+            </section>
+
+            <button @click="reader.open = false" class="mt-6 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white">Close</button>
         </div>
     </div>
 
@@ -277,8 +326,8 @@
         function dashboard() {
             return {
                 tab: 'dept', q: '', deptModal: {{ $errors->has('name') || $errors->has('type') ? 'true' : 'false' }},
-                reader: { open: false, name: '', body: '' },
-                open(name, body) { this.reader = { open: true, name, body }; },
+                reader: { open: false, name: '', meta: '', sections: [], files: [] },
+                view(submission) { this.reader = { open: true, ...submission }; },
                 match(row) { return !this.q || row.innerText.toLowerCase().includes(this.q.toLowerCase()); },
                 initCharts() {
                     Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
