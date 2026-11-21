@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     | key        stored in the database (reports.type)
     | slug       used in the public URL (/submit/{slug})
-    | kind       "report" (executive summary + detailed report) or "citation"
+    | kind       "report" (submitted as an uploaded file) or "citation" (typed, word-limited)
     | scope      "personal" or "unit"
     */
     'reports' => [
@@ -19,7 +19,7 @@ return [
             'label'       => 'Personal annual report',
             'short'       => 'Personal report',
             'description' => 'Ideas and innovations you executed, and your significant contributions to the zone and the ministry.',
-            'includes'    => ['1-page executive summary', 'Detailed report'],
+            'includes'    => ['Upload your report as a document, sheet, audio or video file'],
         ],
         'unit_report' => [
             'slug'        => 'unit-report',
@@ -28,7 +28,7 @@ return [
             'label'       => 'Unit, sub-department or department annual report',
             'short'       => 'Unit report',
             'description' => 'The annual report for your unit, sub-department or department.',
-            'includes'    => ['1-page executive summary', 'Detailed report'],
+            'includes'    => ['Upload your report as a document, sheet, audio or video file'],
         ],
         'personal_citation' => [
             'slug'        => 'personal-citation',
@@ -58,10 +58,7 @@ return [
     | word counters on the forms follow automatically.
     */
     'max_words' => [
-        'citation'       => 150,
-        // "1 page executive summary" (roughly one page of single-spaced text)
-        'report_summary' => 500,
-        'report_detail'  => 3000,
+        'citation' => 150,
     ],
 
     /*

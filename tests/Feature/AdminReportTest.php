@@ -155,8 +155,8 @@ class AdminReportTest extends TestCase
 
         $this->get(route('admin.reports.edit', $this->makeReport('personal_report')))
             ->assertOk()
-            ->assertSee('name="executive_summary"', false)
-            ->assertSee('name="detailed_report"', false)
+            ->assertDontSee('name="executive_summary"', false)
+            ->assertDontSee('name="detailed_report"', false)
             ->assertDontSee('name="citation"', false);
 
         $this->get(route('admin.reports.edit', $this->makeReport('unit_citation')))
@@ -175,8 +175,6 @@ class AdminReportTest extends TestCase
                 'phone'             => '0900 111 2222',
                 'period_from'       => '2026-02-01',
                 'period_to'         => '2026-10-31',
-                'executive_summary' => 'Updated summary',
-                'detailed_report'   => 'Updated detail',
                 'approved'          => '1',
                 'admin_comment'     => 'Checked and fine',
             ]))
@@ -187,8 +185,6 @@ class AdminReportTest extends TestCase
         $this->assertSame('Corrected Name', $report->name);
         $this->assertSame('0900 111 2222', $report->phone);
         $this->assertSame('2026-02-01', $report->period_from->toDateString());
-        $this->assertSame('Updated summary', $report->executive_summary);
-        $this->assertSame('Updated detail', $report->detailed_report);
         $this->assertTrue($report->approved);
         $this->assertSame('Checked and fine', $report->admin_comment);
         $this->assertSame('personal_report', $report->type); // the type never changes

@@ -44,7 +44,7 @@ trait MakesReports
         ];
 
         $content = str_ends_with($type, '_report')
-            ? ['executive_summary' => 'A short summary.', 'detailed_report' => 'The long detailed report.']
+            ? ['attachments' => [$this->pdf('annual-report.pdf')]]   // annual reports are an uploaded file
             : ['citation' => 'A short citation.'];
 
         return array_merge($base, $content, $overrides);
@@ -70,7 +70,7 @@ trait MakesReports
             'period_from' => '2026-01-01',
             'period_to'   => '2026-11-30',
         ], str_ends_with($type, '_report')
-            ? ['executive_summary' => 'Summary text', 'detailed_report' => 'Detail text']
+            ? []
             : ['citation' => 'Citation text'], $overrides));
     }
 

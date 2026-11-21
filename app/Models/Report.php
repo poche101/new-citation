@@ -115,10 +115,21 @@ class Report extends Model
         return "{$from} to {$to}";
     }
 
-    /** The main text shown in lists: the citation, or the executive summary. */
+    /** The main text shown in lists: the citation, or (for a report) its uploaded file names. */
     public function preview(): ?string
     {
-        return $this->isReport() ? $this->executive_summary : $this->citation;
+        if (! $this->isReport()) {
+            return $this->citation;
+        }
+
+        // Reports submitted before the text boxes were removed still have a summary
+        if (filled($this->executive_summary)) {
+            return $this->executive_summary;
+        }
+
+        $names = $this->attachments->pluck('original_name')->implode(', ');
+
+        return $names !== '' ? 'File: ' . $names : null;
     }
 
     /* ---------- Admin list filters ---------- */
@@ -160,10 +171,11 @@ class Report extends Model
     public function sections(): array
     {
         if ($this->isReport()) {
-            return [
-                ['Executive summary', $this->executive_summary],
-                ['Detailed report', $this->detailed_report],
-            ];
+            // Only older reports have typed text; new ones are an uploaded file
+            return array_values(array_filter([
+                filled($this->executive_summary) ? ['Executive summary', $this->executive_summary] : null,
+                filled($this->detailed_report) ? ['Detailed report', $this->detailed_report] : null,
+            ]));
         }
 
         return [['Citation', $this->citation]];

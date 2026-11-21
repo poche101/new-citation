@@ -40,9 +40,10 @@ class ReportSubmissionTest extends TestCase
                 ->assertSee(route('reports.entities', $type['slug']), false);
         }
 
-        $response->assertSee('1-page executive summary')
-            ->assertSee('Detailed report')
-            ->assertSee('Not more than 150 words');
+        $response->assertSee('Upload your report as a document, sheet, audio or video file')
+            ->assertSee('Not more than 150 words')
+            ->assertDontSee('executive summary', false)
+            ->assertDontSee('Detailed report');
     }
 
     public function test_department_and_group_picker_lists_both(): void
@@ -89,7 +90,7 @@ class ReportSubmissionTest extends TestCase
 
     /* ---------------- The forms ---------------- */
 
-    public function test_report_forms_have_summary_detail_dates_and_upload(): void
+    public function test_report_forms_have_dates_and_a_required_upload_and_no_text_boxes(): void
     {
         $dept = $this->department();
 
@@ -97,12 +98,13 @@ class ReportSubmissionTest extends TestCase
             $this->get("/submit/{$slug}/{$dept->id}")
                 ->assertOk()
                 ->assertSee('enctype="multipart/form-data"', false)
-                ->assertSee('name="executive_summary"', false)
-                ->assertSee('name="detailed_report"', false)
+                ->assertDontSee('name="executive_summary"', false)
+                ->assertDontSee('name="detailed_report"', false)
                 ->assertDontSee('name="citation"', false)
                 ->assertSee('name="period_from"', false)
                 ->assertSee('name="period_to"', false)
                 ->assertSee('name="attachments[]"', false)
+                ->assertSee('Upload your report')
                 ->assertSee('Finance');
         }
     }
@@ -158,9 +160,10 @@ class ReportSubmissionTest extends TestCase
             $this->assertSame('2026-11-30', $report->period_to->toDateString());
 
             if ($config['kind'] === 'report') {
-                $this->assertSame('A short summary.', $report->executive_summary);
-                $this->assertSame('The long detailed report.', $report->detailed_report);
+                $this->assertNull($report->executive_summary);
+                $this->assertNull($report->detailed_report);
                 $this->assertNull($report->citation);
+                $this->assertSame(1, $report->attachments()->count());
             } else {
                 $this->assertSame('A short citation.', $report->citation);
                 $this->assertNull($report->executive_summary);
@@ -233,28 +236,28 @@ class ReportSubmissionTest extends TestCase
         ]))->assertSessionHasErrors('citation');
     }
 
-    public function test_report_summary_and_detail_word_limits_are_enforced(): void
+    public function test_annual_reports_need_a_file_and_ignore_typed_text(): void
     {
         $dept = $this->department();
-        $summaryMax = config('citation.max_words.report_summary');
-        $detailMax = config('citation.max_words.report_detail');
 
         foreach (['personal_report', 'unit_report'] as $type) {
-            $this->post($this->submitUrl($type, $dept), $this->payload($type, ['executive_summary' => $this->words($summaryMax + 1)]))
-                ->assertSessionHasErrors('executive_summary');
+            $this->post($this->submitUrl($type, $dept), $this->payload($type, ['attachments' => []]))
+                ->assertSessionHasErrors('attachments');
 
-            $this->post($this->submitUrl($type, $dept), $this->payload($type, ['detailed_report' => $this->words($detailMax + 1)]))
-                ->assertSessionHasErrors('detailed_report');
+            // Text sent by hand is not saved: only validated fields are stored
+            $this->post($this->submitUrl($type, $dept), $this->payload($type, ['executive_summary' => 'x', 'detailed_report' => 'y']))
+                ->assertSessionHasNoErrors();
         }
 
-        $this->assertSame(0, Report::count());
+        $this->assertSame(2, Report::count());
+        $this->assertNull(Report::first()->executive_summary);
     }
 
     public function test_required_fields_are_enforced(): void
     {
         $dept = $this->department();
 
-        foreach (['name', 'unit', 'designation', 'kingschat', 'phone', 'period_from', 'period_to', 'executive_summary', 'detailed_report'] as $field) {
+        foreach (['name', 'unit', 'designation', 'kingschat', 'phone', 'period_from', 'period_to'] as $field) {
             $this->post($this->submitUrl('personal_report', $dept), $this->payload('personal_report', [$field => '']))
                 ->assertSessionHasErrors($field);
         }
@@ -315,13 +318,25 @@ class ReportSubmissionTest extends TestCase
 
     /* ---------------- Uploads ---------------- */
 
-    public function test_uploads_are_optional(): void
+    public function test_uploads_are_optional_for_citations(): void
     {
         $dept = $this->department();
 
-        $this->post($this->submitUrl('personal_report', $dept), $this->payload('personal_report'))->assertSessionHasNoErrors();
+        $this->post($this->submitUrl('personal_citation', $dept), $this->payload('personal_citation'))->assertSessionHasNoErrors();
 
         $this->assertDatabaseCount('citation_attachments', 0);
+    }
+
+    public function test_an_annual_report_cannot_be_submitted_without_a_file(): void
+    {
+        $dept = $this->department();
+
+        foreach (['personal_report', 'unit_report'] as $type) {
+            $this->post($this->submitUrl($type, $dept), $this->payload($type, ['attachments' => []]))
+                ->assertSessionHasErrors('attachments');
+        }
+
+        $this->assertDatabaseCount('reports', 0);
     }
 
     public function test_document_spreadsheet_video_and_audio_files_are_stored_privately(): void

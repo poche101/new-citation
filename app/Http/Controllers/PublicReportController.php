@@ -68,7 +68,7 @@ class PublicReportController extends Controller
         [$key, $config] = $this->resolveType($type);
 
         $data = $request->validate(
-            ReportRules::for($key) + ReportRules::attachments(),
+            ReportRules::for($key) + ReportRules::attachments(0, $config['kind'] === 'report'),
             ReportRules::messages(),
             ReportRules::attributes()
         );

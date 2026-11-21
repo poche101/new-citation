@@ -13,7 +13,7 @@
 
         // Fields on each step, so a failed submit can reopen the right step
         $step1Fields = ['title', 'name', 'unit', 'designation', 'kingschat', 'phone'];
-        $step2Fields = ['period_from', 'period_to', 'executive_summary', 'detailed_report', 'citation'];
+        $step2Fields = ['period_from', 'period_to', 'citation'];
         $errorStep = $errors->hasAny($step1Fields) ? 1 : ($errors->hasAny($step2Fields) ? 2 : ($errors->hasAny(['attachments']) || collect($errors->keys())->contains(fn ($k) => str_starts_with($k, 'attachments')) ? 3 : 0));
     @endphp
 
@@ -86,8 +86,8 @@
             </div>
 
             {{-- Step 2: period and content --}}
-            <div class="form-step hidden space-y-8" data-step-name="{{ $isReport ? 'Your report' : 'Your citation' }}">
-                <h2 class="font-display text-2xl font-medium text-royal-900">{{ $isReport ? 'Your report' : 'Your citation' }}</h2>
+            <div class="form-step hidden space-y-8" data-step-name="{{ $isReport ? 'Period covered' : 'Your citation' }}">
+                <h2 class="font-display text-2xl font-medium text-royal-900">{{ $isReport ? 'Period covered' : 'Your citation' }}</h2>
 
                 <fieldset>
                     <legend class="text-sm font-semibold text-royal-900">
@@ -103,23 +103,13 @@
                     <p id="periodSummary" class="mt-3 rounded-lg bg-royal-50 px-4 py-2.5 text-sm font-medium text-royal-800" aria-live="polite"></p>
                 </fieldset>
 
-                @if ($isReport)
-                    <x-report.textarea name="executive_summary" label="Executive summary"
-                        :max="$words['report_summary']" rows="10"
-                        hint="One page. The key points of your year for a reader who has two minutes." />
-
-                    <x-report.textarea name="detailed_report" label="Detailed report"
-                        :max="$words['report_detail']" rows="16"
-                        :hint="$isUnit
-                            ? 'The full report for your unit, sub-department or department: what was done, the results, and what comes next.'
-                            : 'Include the ideas and innovations you executed, and your significant contributions to the zone and the ministry.'" />
-                @else
+                @unless ($isReport)
                     <x-report.textarea name="citation" label="Citation"
                         :max="$words['citation']" rows="8"
                         :hint="$isUnit
                             ? 'Recognise your unit or department and the work it did this year.'
                             : 'Recognise your work and what it achieved this year.'" />
-                @endif
+                @endunless
 
                 <div class="flex justify-between pt-2">
                     <button type="button" onclick="prevStep()"
@@ -130,10 +120,16 @@
             </div>
 
             {{-- Step 3: files, then submit --}}
-            <div class="form-step hidden space-y-6" data-step-name="Attach files">
+            <div class="form-step hidden space-y-6" data-step-name="{{ $isReport ? 'Upload your report' : 'Attach files' }}">
                 <div>
-                    <h2 class="font-display text-2xl font-medium text-royal-900">Attach files</h2>
-                    <p class="mt-1 text-slate-600">Optional. Add a document, spreadsheet, video or audio file that supports your submission.</p>
+                    <h2 class="font-display text-2xl font-medium text-royal-900">{{ $isReport ? 'Upload your report' : 'Attach files' }}</h2>
+                    <p class="mt-1 text-slate-600">
+                        @if ($isReport)
+                            Attach your report as a document, spreadsheet, video or audio file. This is required.
+                        @else
+                            Optional. Add a document, spreadsheet, video or audio file that supports your submission.
+                        @endif
+                    </p>
                 </div>
 
                 <div class="rounded-xl border-2 border-dashed border-royal-200 bg-royal-50/60 p-6">
@@ -143,7 +139,7 @@
                         Up to {{ $uploads['max_files'] }} files, {{ $maxMb }} MB each.
                     </p>
 
-                    <input id="attachments" type="file" name="attachments[]" multiple
+                    <input id="attachments" type="file" name="attachments[]" multiple @required($isReport)
                         accept=".{{ implode(',.', $allExtensions) }}"
                         data-max-files="{{ $uploads['max_files'] }}"
                         data-max-bytes="{{ $uploads['max_size_kb'] * 1024 }}"

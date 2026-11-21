@@ -97,8 +97,13 @@
                 <h2 class="font-bold">{{ $isReport ? 'Report' : 'Citation' }}</h2>
 
                 @if ($isReport)
-                    <x-admin.textarea name="executive_summary" label="Executive summary" :max="$words['report_summary']" rows="9" :value="$report->executive_summary" />
-                    <x-admin.textarea name="detailed_report" label="Detailed report" :max="$words['report_detail']" rows="16" :value="$report->detailed_report" />
+                    <p class="text-sm text-slate-600">Annual reports are submitted as uploaded files. Manage the file under "Uploaded files" below.</p>
+                    @foreach ($report->sections() as [$heading, $text])
+                        <div>
+                            <p class="text-sm font-semibold text-slate-700">{{ $heading }} <span class="font-normal text-slate-400">(typed before the text boxes were removed)</span></p>
+                            <p class="mt-1 whitespace-pre-wrap rounded-lg bg-paper px-3 py-2 text-sm text-slate-700">{{ $text }}</p>
+                        </div>
+                    @endforeach
                 @else
                     <x-admin.textarea name="citation" label="Citation" :max="$words['citation']" rows="7" :value="$report->citation" />
                 @endif
