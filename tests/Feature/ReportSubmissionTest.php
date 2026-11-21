@@ -318,6 +318,32 @@ class ReportSubmissionTest extends TestCase
 
     /* ---------------- Uploads ---------------- */
 
+    public function test_the_form_has_separate_boxes_for_files_and_for_audio_and_video(): void
+    {
+        $dept = $this->department();
+
+        foreach (['personal_report', 'personal_citation'] as $type) {
+            $page = $this->get(route('reports.create', [config("citation.reports.{$type}.slug"), $dept->id]));
+
+            $page->assertOk()
+                ->assertSee('Document or spreadsheet')
+                ->assertSee('Audio or video')
+                ->assertSee('id="upload_files"', false)
+                ->assertSee('id="upload_media"', false);
+        }
+    }
+
+    public function test_a_file_and_a_recording_can_be_sent_together(): void
+    {
+        $dept = $this->department();
+
+        $this->post($this->submitUrl('personal_report', $dept), $this->payload('personal_report', [
+            'attachments' => [$this->pdf('report.pdf'), \Illuminate\Http\UploadedFile::fake()->create('talk.mp3', 200, 'audio/mpeg')],
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertSame(['document', 'audio'], \App\Models\CitationAttachment::orderBy('id')->pluck('kind')->all());
+    }
+
     public function test_uploads_are_optional_for_citations(): void
     {
         $dept = $this->department();

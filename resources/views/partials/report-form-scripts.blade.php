@@ -99,40 +99,46 @@
     [from, to].forEach((el) => el && el.addEventListener('input', updatePeriod));
     updatePeriod();
 
-    /* ---------- Upload checks ---------- */
-    const fileInput = document.getElementById('attachments');
-    const fileList = document.getElementById('attachmentList');
-    const fileError = document.getElementById('attachmentError');
+    /* ---------- Upload checks (one box for documents, one for audio and video) ---------- */
+    const zones = Array.from(form.querySelectorAll('[data-upload]'));
+    const totalError = document.getElementById('uploadTotalError');
+    const REQUIRE_FILE = form.dataset.requireFile === '1';
 
     const formatSize = (bytes) => bytes >= 1048576
         ? (bytes / 1048576).toFixed(1) + ' MB'
         : Math.max(1, Math.round(bytes / 1024)) + ' KB';
 
-    if (fileInput && fileList && fileError) {
-        const maxFiles = parseInt(fileInput.dataset.maxFiles, 10);
-        const maxBytes = parseInt(fileInput.dataset.maxBytes, 10);
-        const allowed = fileInput.dataset.extensions.split(',');
+    const chosenCount = () => zones.reduce((n, z) => n + z.querySelector('[data-upload-input]').files.length, 0);
 
-        const clearFiles = () => { fileInput.value = ''; fileList.replaceChildren(); };
+    zones.forEach((zone) => {
+        const input = zone.querySelector('[data-upload-input]');
+        const list = zone.querySelector('[data-upload-list]');
+        const error = zone.querySelector('[data-upload-error]');
+        const maxFiles = parseInt(input.dataset.maxFiles, 10);
+        const maxBytes = parseInt(input.dataset.maxBytes, 10);
+        const allowed = input.dataset.extensions.split(',');
 
-        fileInput.addEventListener('change', () => {
-            const files = Array.from(fileInput.files);
+        const clearFiles = () => { input.value = ''; list.replaceChildren(); };
+
+        input.addEventListener('change', () => {
+            const files = Array.from(input.files);
             const problems = [];
 
             if (files.length > maxFiles) problems.push('Please choose at most ' + maxFiles + ' files.');
             files.forEach((file) => {
                 const ext = file.name.split('.').pop().toLowerCase();
-                if (!allowed.includes(ext)) problems.push('"' + file.name + '" is not an allowed file type.');
+                if (!allowed.includes(ext)) problems.push('"' + file.name + '" is not an allowed file type for this box.');
                 if (file.size > maxBytes) problems.push('"' + file.name + '" is larger than ' + formatSize(maxBytes) + '.');
             });
 
-            fileError.hidden = problems.length === 0;
-            fileError.textContent = problems.join(' ');
+            error.hidden = problems.length === 0;
+            error.textContent = problems.join(' ');
+            if (totalError) totalError.hidden = true;
 
             if (problems.length) { clearFiles(); return; }
 
             // textContent (not innerHTML): file names are untrusted text
-            fileList.replaceChildren(...files.map((file) => {
+            list.replaceChildren(...files.map((file) => {
                 const li = document.createElement('li');
                 li.className = 'flex justify-between gap-4 rounded-lg bg-white px-3 py-2 ring-1 ring-royal-100';
 
@@ -152,15 +158,24 @@
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.className = 'text-sm font-medium text-royal-700 underline underline-offset-4 hover:text-royal-900';
-                remove.textContent = 'Remove all files';
+                remove.textContent = 'Remove all';
                 remove.addEventListener('click', clearFiles);
 
                 const li = document.createElement('li');
                 li.append(remove);
-                fileList.append(li);
+                list.append(li);
             }
         });
-    }
+    });
+
+    // Rules that span both boxes: the total, and "at least one" for annual reports
+    const fileProblem = () => {
+        const max = zones.length ? parseInt(zones[0].querySelector('[data-upload-input]').dataset.maxFiles, 10) : 0;
+        const n = chosenCount();
+        if (n > max) return 'You can attach up to ' + max + ' files in total. Remove some and try again.';
+        if (REQUIRE_FILE && n === 0) return 'Please attach your report as a document, spreadsheet, audio or video file.';
+        return '';
+    };
 
     /* ---------- Submit: check every step, then show progress ---------- */
     const submitBtn = document.getElementById('submitBtn');
@@ -176,8 +191,18 @@
             }
         }
 
+        const problem = fileProblem();
+        if (problem && totalError) {
+            event.preventDefault();
+            show(steps.length - 1);
+            totalError.textContent = problem;
+            totalError.hidden = false;
+            totalError.scrollIntoView({ block: 'center' });
+            return;
+        }
+
         if (submitBtn) {
-            const hasFiles = fileInput && fileInput.files.length > 0;
+            const hasFiles = chosenCount() > 0;
             submitBtn.disabled = true;
             submitBtn.textContent = hasFiles ? 'Uploading. Please keep this page open.' : 'Submitting...';
         }
