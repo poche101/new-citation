@@ -40,6 +40,24 @@ class AdminReportTest extends TestCase
         return $report->fresh('attachments');
     }
 
+    public function test_the_list_shows_a_download_link_for_an_annual_report_file(): void
+    {
+        $report = $this->reportWithFile('personal_report');
+        $file   = $report->attachments->first();
+
+        $this->actingAsAdmin();
+
+        $page = $this->get(route('admin.reports.index', ['type' => 'personal_report']));
+
+        $page->assertOk()
+            ->assertSee(route('admin.attachments.download', $file), false)
+            ->assertSee('proof.pdf');
+
+        $this->get(route('admin.attachments.download', $file))
+            ->assertOk()
+            ->assertHeader('content-disposition');
+    }
+
     /* ---------------- Access ---------------- */
 
     public function test_guests_are_sent_to_the_admin_login_not_an_error(): void

@@ -147,14 +147,27 @@
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-3">{{ $r->periodText() }}</td>
                                 <td class="min-w-[16rem] max-w-xs px-4 py-3">
-                                    <p>{{ \Illuminate\Support\Str::limit($r->preview() ?? 'N/A', 70) }}</p>
-                                    <button type="button" class="mt-1 text-xs font-semibold text-teal hover:underline"
-                                            @click="view({{ Js::from($submission) }})">
-                                        View
-                                        @if ($r->attachments->isNotEmpty())
-                                            <span class="ml-1 rounded-full bg-gold-soft px-1.5 py-0.5 text-gold-dark">{{ $r->attachments->count() }} {{ \Illuminate\Support\Str::plural('file', $r->attachments->count()) }}</span>
-                                        @endif
-                                    </button>
+                                    @php $typedText = $r->isReport() ? ($r->executive_summary ?: null) : $r->citation; @endphp
+                                    @if ($typedText)
+                                        <p>{{ \Illuminate\Support\Str::limit($typedText, 70) }}</p>
+                                    @endif
+
+                                    @forelse ($r->attachments as $file)
+                                        <a href="{{ route('admin.attachments.download', $file) }}"
+                                           class="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs hover:border-teal hover:bg-teal-soft"
+                                           title="Download {{ $file->original_name }}">
+                                            <svg class="h-4 w-4 shrink-0 text-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3M12 4v12m0 0l-4-4m4 4l4-4"/></svg>
+                                            <span class="min-w-0 flex-1 truncate font-semibold text-teal">{{ $file->original_name }}</span>
+                                            <span class="shrink-0 capitalize text-slate-500">{{ $file->humanSize() }}</span>
+                                        </a>
+                                    @empty
+                                        @unless ($typedText)
+                                            <p class="text-slate-400">No file uploaded</p>
+                                        @endunless
+                                    @endforelse
+
+                                    <button type="button" class="mt-1.5 text-xs font-semibold text-teal hover:underline"
+                                            @click="view({{ Js::from($submission) }})">View details</button>
                                 </td>
                                 <td class="px-4 py-3">
                                     <form method="POST" action="{{ route('admin.reports.approval', $r) }}">
