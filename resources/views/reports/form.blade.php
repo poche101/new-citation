@@ -15,7 +15,8 @@
         // Fields on each step, so a failed submit can reopen the right step
         $step1Fields = ['title', 'name', 'unit', 'designation', 'kingschat', 'phone'];
         $step2Fields = ['period_from', 'period_to', 'citation'];
-        $errorStep = $errors->hasAny($step1Fields) ? 1 : ($errors->hasAny($step2Fields) ? 2 : ($errors->hasAny(['attachments']) || collect($errors->keys())->contains(fn ($k) => str_starts_with($k, 'attachments')) ? 3 : 0));
+        $tooLarge = request()->query('upload_error') === 'too_large';
+        $errorStep = $tooLarge ? 3 : ($errors->hasAny($step1Fields) ? 1 : ($errors->hasAny($step2Fields) ? 2 : ($errors->hasAny(['attachments']) || collect($errors->keys())->contains(fn ($k) => str_starts_with($k, 'attachments')) ? 3 : 0)));
     @endphp
 
     <main class="mx-auto max-w-3xl px-5 pb-20 pt-10">
@@ -49,6 +50,13 @@
                 <div id="stepProgressBar" class="h-full rounded-full bg-gold-500 transition-all duration-300" style="width: 33.33%"></div>
             </div>
         </div>
+
+        @if ($tooLarge)
+            <div class="mt-8 rounded-xl border border-red-200 bg-red-50 p-5 text-red-900" role="alert">
+                <p class="font-semibold">Your submission has not been sent yet.</p>
+                <p class="mt-1 text-sm">The files you chose are too big to send in one go (the server accepts up to {{ ini_get('post_max_size') }} per submission). Please choose smaller files, or fewer of them, and submit again.</p>
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="mt-8 rounded-xl border border-red-200 bg-red-50 p-5 text-red-900" role="alert">

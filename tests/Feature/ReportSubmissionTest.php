@@ -344,6 +344,21 @@ class ReportSubmissionTest extends TestCase
         $this->assertSame(['document', 'audio'], \App\Models\CitationAttachment::orderBy('id')->pluck('kind')->all());
     }
 
+    public function test_a_post_that_is_too_large_returns_to_the_form_with_a_clear_message(): void
+    {
+        $dept = $this->department();
+        $url  = "/submit/personal-report/{$dept->id}";
+
+        // Simulate PHP rejecting a body bigger than post_max_size
+        $this->app['router']->post('/__too-large', fn () => throw new \Illuminate\Http\Exceptions\PostTooLargeException())->middleware('web');
+
+        $this->from($url)->post('/__too-large')->assertRedirect($url . '?upload_error=too_large');
+
+        $this->get($url . '?upload_error=too_large')
+            ->assertOk()
+            ->assertSee('too big to send in one go');
+    }
+
     public function test_uploads_are_optional_for_citations(): void
     {
         $dept = $this->department();

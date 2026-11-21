@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,5 +18,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Uploads bigger than the server's post_max_size are rejected before the session
+        // starts, so a flashed error would be lost. Return to the form with a flag in the
+        // address instead; the form explains it (see reports/form.blade.php).
+        $exceptions->render(function (PostTooLargeException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'The files are too big for the server (limit ' . ini_get('post_max_size') . ').'], 413);
+            }
+
+            $back = parse_url(url()->previous(), PHP_URL_PATH) ?: '/submit';
+
+            return redirect($back . '?upload_error=too_large');
+        });
     })->create();
