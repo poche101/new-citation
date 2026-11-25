@@ -10,7 +10,7 @@ use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 
 /**
- * A document, video or audio file uploaded with a citation submission.
+ * A document or spreadsheet uploaded with a citation submission.
  * Stored on a private disk; only admins can download it.
  */
 class CitationAttachment extends Model

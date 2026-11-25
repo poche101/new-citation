@@ -40,7 +40,7 @@ class ReportSubmissionTest extends TestCase
                 ->assertSee(route('reports.entities', $type['slug']), false);
         }
 
-        $response->assertSee('Upload your report as a document, sheet, audio or video file')
+        $response->assertSee('Upload your report as a document or sheet')
             ->assertSee('Not more than 150 words')
             ->assertDontSee('executive summary', false)
             ->assertDontSee('Detailed report');
@@ -318,30 +318,32 @@ class ReportSubmissionTest extends TestCase
 
     /* ---------------- Uploads ---------------- */
 
-    public function test_the_form_has_separate_boxes_for_files_and_for_audio_and_video(): void
+    public function test_the_form_offers_documents_and_spreadsheets_only(): void
     {
         $dept = $this->department();
 
         foreach (['personal_report', 'personal_citation'] as $type) {
-            $page = $this->get(route('reports.create', [config("citation.reports.{$type}.slug"), $dept->id]));
-
-            $page->assertOk()
-                ->assertSee('Document or spreadsheet')
-                ->assertSee('Audio or video')
+            $this->get(route('reports.create', [config("citation.reports.{$type}.slug"), $dept->id]))
+                ->assertOk()
                 ->assertSee('id="upload_files"', false)
-                ->assertSee('id="upload_media"', false);
+                ->assertDontSee('upload_media', false)
+                ->assertDontSee('Audio or video')
+                ->assertDontSee('.mp3', false)
+                ->assertDontSee('.mp4', false);
         }
     }
 
-    public function test_a_file_and_a_recording_can_be_sent_together(): void
+    public function test_audio_and_video_files_are_refused(): void
     {
         $dept = $this->department();
 
-        $this->post($this->submitUrl('personal_report', $dept), $this->payload('personal_report', [
-            'attachments' => [$this->pdf('report.pdf'), \Illuminate\Http\UploadedFile::fake()->create('talk.mp3', 200, 'audio/mpeg')],
-        ]))->assertSessionHasNoErrors();
+        foreach ([['talk.mp3', 'audio/mpeg'], ['clip.mp4', 'video/mp4']] as [$name, $mime]) {
+            $this->post($this->submitUrl('personal_report', $dept), $this->payload('personal_report', [
+                'attachments' => [\Illuminate\Http\UploadedFile::fake()->create($name, 100, $mime)],
+            ]))->assertSessionHasErrors('attachments.0');
+        }
 
-        $this->assertSame(['document', 'audio'], \App\Models\CitationAttachment::orderBy('id')->pluck('kind')->all());
+        $this->assertDatabaseCount('reports', 0);
     }
 
     public function test_a_post_that_is_too_large_returns_to_the_form_with_a_clear_message(): void
@@ -380,7 +382,7 @@ class ReportSubmissionTest extends TestCase
         $this->assertDatabaseCount('reports', 0);
     }
 
-    public function test_document_spreadsheet_video_and_audio_files_are_stored_privately(): void
+    public function test_document_and_spreadsheet_files_are_stored_privately(): void
     {
         $dept = $this->department();
 
@@ -388,21 +390,19 @@ class ReportSubmissionTest extends TestCase
             'attachments' => [
                 $this->pdf('report.pdf'),
                 UploadedFile::fake()->create('figures.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
-                UploadedFile::fake()->create('highlights.mp4', 2000, 'video/mp4'),
-                UploadedFile::fake()->create('testimony.mp3', 500, 'audio/mpeg'),
             ],
         ]))->assertSessionHasNoErrors();
 
         $report = Report::with('attachments')->firstOrFail();
 
-        $this->assertEqualsCanonicalizing(['document', 'sheet', 'video', 'audio'], $report->attachments->pluck('kind')->all());
+        $this->assertEqualsCanonicalizing(['document', 'sheet'], $report->attachments->pluck('kind')->all());
 
         foreach ($report->attachments as $file) {
             Storage::disk('local')->assertExists($file->path);
             $this->assertSame('local', $file->disk);
             Storage::disk('public')->assertMissing($file->path);
             // The visitor's own file name is never used on disk
-            $this->assertStringNotContainsString('highlights', $file->path);
+            $this->assertStringNotContainsString('figures', $file->path);
         }
     }
 

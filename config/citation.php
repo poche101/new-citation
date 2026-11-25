@@ -19,7 +19,7 @@ return [
             'label'       => 'Personal annual report',
             'short'       => 'Personal report',
             'description' => 'Ideas and innovations you executed, and your significant contributions to the zone and the ministry.',
-            'includes'    => ['Upload your report as a document, sheet, audio or video file'],
+            'includes'    => ['Upload your report as a document or sheet'],
         ],
         'unit_report' => [
             'slug'        => 'unit-report',
@@ -28,7 +28,7 @@ return [
             'label'       => 'Unit, sub-department or department annual report',
             'short'       => 'Unit report',
             'description' => 'The annual report for your unit, sub-department or department.',
-            'includes'    => ['Upload your report as a document, sheet, audio or video file'],
+            'includes'    => ['Upload your report as a document or sheet'],
         ],
         'personal_citation' => [
             'slug'        => 'personal-citation',
@@ -63,7 +63,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Uploads (documents, spreadsheets, video and audio)
+    | Uploads (documents and spreadsheets)
     |--------------------------------------------------------------------------
     | Files go to a PRIVATE disk (storage/app/private by default), never to
     | public/. They are only reachable through the admin-only download route.
@@ -83,16 +83,11 @@ return [
         'types' => [
             'document' => ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'odt', 'txt'],
             'sheet'    => ['xls', 'xlsx', 'csv', 'ods'],
-            'video'    => ['mp4', 'mov', 'avi', 'webm', 'mkv', '3gp'],
-            'audio'    => ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'opus'],
         ],
 
         // The file's real content type (sniffed by the server, not its name)
         // must also be one of these. Wildcards are allowed.
         'mimetypes' => [
-            'video/*',
-            'audio/*',
-            'application/ogg',
             'application/pdf',
             'application/msword',
             'application/vnd.ms-powerpoint',

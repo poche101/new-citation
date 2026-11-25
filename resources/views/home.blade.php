@@ -33,7 +33,7 @@
                 </h1>
                 <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-royal-100">
                     Submit an annual report or a citation, for yourself or for your unit or department.
-                    You can attach documents, spreadsheets, audio or video.
+                    You can attach a document or spreadsheet.
                 </p>
                 <div class="mt-9">
                     <a href="{{ route('reports.choose') }}"

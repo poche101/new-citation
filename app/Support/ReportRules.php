@@ -63,12 +63,12 @@ class ReportRules
     {
         $uploads = config('citation.uploads');
         $maxMb   = (int) round($uploads['max_size_kb'] / 1024);
-        $typeMsg = 'Only documents (PDF, Word, PowerPoint), spreadsheets (Excel, CSV), video and audio files can be uploaded.';
+        $typeMsg = 'Only documents (PDF, Word, PowerPoint), spreadsheets (Excel, CSV) can be uploaded.';
 
         return [
             'period_to.after_or_equal' => 'The "To" date must be the same as or later than the "From" date.',
-            'attachments.required'     => 'Please attach your report as a document, spreadsheet, audio or video file.',
-            'attachments.min'          => 'Please attach your report as a document, spreadsheet, audio or video file.',
+            'attachments.required'     => 'Please attach your report as a document or spreadsheet.',
+            'attachments.min'          => 'Please attach your report as a document or spreadsheet.',
             'attachments.max'          => "You can attach up to {$uploads['max_files']} files in total.",
             'attachments.*.uploaded'   => 'A file could not be uploaded. It may be larger than the server allows, so try a smaller file.',
             'attachments.*.max'        => "Each file must be {$maxMb} MB or smaller.",

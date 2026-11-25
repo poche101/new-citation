@@ -282,7 +282,7 @@ class AdminReportTest extends TestCase
 
         $this->actingAsAdmin()
             ->put(route('admin.reports.update', $report), $this->payload('personal_citation', [
-                'attachments' => [UploadedFile::fake()->create('clip.mp4', 500, 'video/mp4')],
+                'attachments' => [UploadedFile::fake()->create('extra.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')],
             ]))
             ->assertSessionHasNoErrors();
 

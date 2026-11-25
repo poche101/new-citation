@@ -10,7 +10,6 @@
         $isUnit = $type['scope'] === 'unit';
         $maxMb = (int) round($uploads['max_size_kb'] / 1024);
         $fileExtensions = array_merge($uploads['types']['document'], $uploads['types']['sheet']);
-        $mediaExtensions = array_merge($uploads['types']['video'], $uploads['types']['audio']);
 
         // Fields on each step, so a failed submit can reopen the right step
         $step1Fields = ['title', 'name', 'unit', 'designation', 'kingschat', 'phone'];
@@ -135,43 +134,25 @@
                     <h2 class="font-display text-2xl font-medium text-royal-900">{{ $isReport ? 'Upload your report' : 'Attach files' }}</h2>
                     <p class="mt-1 text-slate-600">
                         @if ($isReport)
-                            Attach your report as a document or spreadsheet, or as an audio or video recording. At least one file is required.
+                            Attach your report as a document or spreadsheet. This is required.
                         @else
-                            Optional. Add a document, spreadsheet, video or audio file that supports your submission.
+                            Optional. Add a document or spreadsheet that supports your submission.
                         @endif
                     </p>
                 </div>
 
-                <div class="grid gap-5 sm:grid-cols-2">
-                    {{-- Documents and spreadsheets --}}
-                    <div class="rounded-xl border-2 border-dashed border-royal-200 bg-royal-50/60 p-6" data-upload>
-                        <label for="upload_files" class="block font-semibold text-royal-900">Document or spreadsheet</label>
-                        <p class="mt-1 text-sm text-slate-600">PDF, Word, PowerPoint, Excel or CSV.</p>
-                        <input id="upload_files" type="file" name="attachments[]" multiple
-                            accept=".{{ implode(',.', $fileExtensions) }}"
-                            data-upload-input
-                            data-max-files="{{ $uploads['max_files'] }}"
-                            data-max-bytes="{{ $uploads['max_size_kb'] * 1024 }}"
-                            data-extensions="{{ implode(',', $fileExtensions) }}"
-                            class="mt-4 block w-full text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-royal-800 file:px-5 file:py-2.5 file:font-semibold file:text-white hover:file:bg-royal-700">
-                        <ul class="mt-4 space-y-2 text-sm" data-upload-list></ul>
-                        <p hidden class="mt-3 text-sm font-medium text-red-700" role="alert" data-upload-error></p>
-                    </div>
-
-                    {{-- Audio and video --}}
-                    <div class="rounded-xl border-2 border-dashed border-royal-200 bg-royal-50/60 p-6" data-upload>
-                        <label for="upload_media" class="block font-semibold text-royal-900">Audio or video</label>
-                        <p class="mt-1 text-sm text-slate-600">MP3, WAV, M4A, MP4, MOV and similar.</p>
-                        <input id="upload_media" type="file" name="attachments[]" multiple
-                            accept=".{{ implode(',.', $mediaExtensions) }}"
-                            data-upload-input
-                            data-max-files="{{ $uploads['max_files'] }}"
-                            data-max-bytes="{{ $uploads['max_size_kb'] * 1024 }}"
-                            data-extensions="{{ implode(',', $mediaExtensions) }}"
-                            class="mt-4 block w-full text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-royal-800 file:px-5 file:py-2.5 file:font-semibold file:text-white hover:file:bg-royal-700">
-                        <ul class="mt-4 space-y-2 text-sm" data-upload-list></ul>
-                        <p hidden class="mt-3 text-sm font-medium text-red-700" role="alert" data-upload-error></p>
-                    </div>
+                <div class="rounded-xl border-2 border-dashed border-royal-200 bg-royal-50/60 p-6" data-upload>
+                    <label for="upload_files" class="block font-semibold text-royal-900">Choose files</label>
+                    <p class="mt-1 text-sm text-slate-600">Documents (PDF, Word, PowerPoint) or spreadsheets (Excel, CSV).</p>
+                    <input id="upload_files" type="file" name="attachments[]" multiple
+                        accept=".{{ implode(',.', $fileExtensions) }}"
+                        data-upload-input
+                        data-max-files="{{ $uploads['max_files'] }}"
+                        data-max-bytes="{{ $uploads['max_size_kb'] * 1024 }}"
+                        data-extensions="{{ implode(',', $fileExtensions) }}"
+                        class="mt-4 block w-full text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-royal-800 file:px-5 file:py-2.5 file:font-semibold file:text-white hover:file:bg-royal-700">
+                    <ul class="mt-4 space-y-2 text-sm" data-upload-list></ul>
+                    <p hidden class="mt-3 text-sm font-medium text-red-700" role="alert" data-upload-error></p>
                 </div>
 
                 <p class="text-sm text-slate-600">Up to {{ $uploads['max_files'] }} files in total, {{ $maxMb }} MB each.</p>

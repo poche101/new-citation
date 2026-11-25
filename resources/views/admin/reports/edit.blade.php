@@ -140,7 +140,7 @@
                 <div class="mt-5">
                     <label for="attachments" class="mb-1 block text-sm font-semibold">Add files</label>
                     <p class="mb-2 text-xs text-slate-500">
-                        Documents, spreadsheets, video or audio. Up to {{ $uploads['max_files'] }} files in total, {{ $maxMb }} MB each.
+                        Documents and spreadsheets. Up to {{ $uploads['max_files'] }} files in total, {{ $maxMb }} MB each.
                     </p>
                     <input id="attachments" type="file" name="attachments[]" multiple
                            accept=".{{ implode(',.', $allExtensions) }}"

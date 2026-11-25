@@ -99,7 +99,7 @@
     [from, to].forEach((el) => el && el.addEventListener('input', updatePeriod));
     updatePeriod();
 
-    /* ---------- Upload checks (one box for documents, one for audio and video) ---------- */
+    /* ---------- Upload checks (documents and spreadsheets) ---------- */
     const zones = Array.from(form.querySelectorAll('[data-upload]'));
     const totalError = document.getElementById('uploadTotalError');
     const REQUIRE_FILE = form.dataset.requireFile === '1';
@@ -173,7 +173,7 @@
         const max = zones.length ? parseInt(zones[0].querySelector('[data-upload-input]').dataset.maxFiles, 10) : 0;
         const n = chosenCount();
         if (n > max) return 'You can attach up to ' + max + ' files in total. Remove some and try again.';
-        if (REQUIRE_FILE && n === 0) return 'Please attach your report as a document, spreadsheet, audio or video file.';
+        if (REQUIRE_FILE && n === 0) return 'Please attach your report as a document or spreadsheet.';
         return '';
     };
 
