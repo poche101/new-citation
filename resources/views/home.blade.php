@@ -80,7 +80,7 @@
             <div class="lg:col-span-4">
                 <h2 class="font-display text-4xl font-medium tracking-tight text-royal-900">What you can submit</h2>
                 <p class="mt-4 max-w-sm text-lg leading-relaxed text-slate-600">
-                    Choose the one that fits. You can submit more than one, each in its own form.
+                    You can submit more than one, each in its own form.
                 </p>
             </div>
 
