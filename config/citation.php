@@ -71,13 +71,18 @@ return [
     | The web server has its own limits too. For these sizes to work in
     | production, raise them as well:
     |   - nginx:   client_max_body_size  (e.g. 120M)
-    |   - php.ini: upload_max_filesize and post_max_size (e.g. 100M / 600M)
+    |   - php.ini: upload_max_filesize >= the file limit, and post_max_size >=
+    |     max_files x the file limit (e.g. 500M / 2500M), plus max_execution_time
+    |     and max_input_time (e.g. 600)
     */
     'uploads' => [
         'disk'        => env('CITATION_UPLOAD_DISK', 'local'),
         'directory'   => 'citation-attachments',
         'max_files'   => 5,
-        'max_size_kb' => 102400, // 100 MB per file
+        // Largest single file. Set CITATION_MAX_FILE_MB in .env to change it. The limit
+        // actually applied is never higher than what PHP allows (see AppServiceProvider),
+        // so the form always tells people the truth about what will work.
+        'max_size_kb' => (int) env('CITATION_MAX_FILE_MB', 500) * 1024,
 
         // Allowed extensions, grouped by the kind shown to admins
         'types' => [

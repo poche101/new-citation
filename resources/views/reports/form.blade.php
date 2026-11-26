@@ -72,6 +72,7 @@
             action="{{ route('reports.store', [$type['slug'], $department->id]) }}"
             data-error-step="{{ $errorStep }}"
             data-require-file="{{ $isReport ? 1 : 0 }}"
+            data-max-total-bytes="{{ (int) ($uploads['max_total_kb'] ?? 0) * 1024 }}"
             class="mt-8 rounded-2xl border border-royal-100 bg-white p-6 shadow-sm sm:p-9">
             @csrf
 

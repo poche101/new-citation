@@ -173,6 +173,9 @@
         const max = zones.length ? parseInt(zones[0].querySelector('[data-upload-input]').dataset.maxFiles, 10) : 0;
         const n = chosenCount();
         if (n > max) return 'You can attach up to ' + max + ' files in total. Remove some and try again.';
+        const maxTotal = parseInt(form.dataset.maxTotalBytes, 10) || 0;
+        const total = zones.reduce((sum, z) => sum + Array.from(z.querySelector('[data-upload-input]').files).reduce((a, f) => a + f.size, 0), 0);
+        if (maxTotal && total > maxTotal) return 'Your files add up to ' + formatSize(total) + ', but the server accepts ' + formatSize(maxTotal) + ' in one submission. Remove a file, or send the rest in a second submission.';
         if (REQUIRE_FILE && n === 0) return 'Please attach your report as a document or spreadsheet.';
         return '';
     };
